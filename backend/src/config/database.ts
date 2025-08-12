@@ -11,7 +11,8 @@ export async function connectToDatabase(): Promise<void> {
       autoIndex: config.NODE_ENV !== 'production',
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000
+      socketTimeoutMS: 45000,
+      dbName: config.DB_NAME,
     } as const;
 
     await mongoose.connect(config.MONGODB_URI, connectionOptions);

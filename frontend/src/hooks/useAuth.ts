@@ -37,9 +37,14 @@ export const useAuth = () => {
     },
   });
 
+  console.log("session:", session);
+
   return {
     // Session data
-    user: session?.data?.user || null,
+    user: {
+      ...session?.data?.user,
+      accountLinked: (session?.data?.user as { accountLinked?: boolean } | undefined)?.accountLinked,
+    },
     session: session?.data || null,
     isAuthenticated: !!session?.data?.user,
     

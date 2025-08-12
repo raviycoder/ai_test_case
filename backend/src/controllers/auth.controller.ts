@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient, Db } from "mongodb";
+import { beforeAuthHook } from "../middleware/auth.middleware";
 
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/";
@@ -35,6 +36,9 @@ export const getAuth = async () => {
   // Create Better Auth instance with connected database
   authInstance = betterAuth({
     database: mongodbAdapter(db),
+    hooks: {
+      before: beforeAuthHook,
+    },
     socialProviders: {
       github: {
         clientId: process.env.GITHUB_CLIENT_ID as string,
@@ -58,4 +62,12 @@ export const getAuth = async () => {
   });
 
   return authInstance;
+};
+
+export const requestAdditionalScopes = async () => {
+  const auth = await getAuth();
+  await auth.linkSocial({
+    provider: "github",
+    scopes: ["repo"], // Use "public_repo" if you only need access to public repositories
+  });
 };

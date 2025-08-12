@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import userRoutes from './user.route';
+import githubRoutes from './github.route';
 
 const router = Router();
 
@@ -24,15 +26,8 @@ router.get('/test', (req, res) => {
   });
 });
 
-router.get('/test/data', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Test data endpoint working',
-    data: {
-      environment: process.env.NODE_ENV,
-      timestamp: new Date().toISOString()
-    }
-  });
-});
+// Mount feature routers
+router.use('/users', userRoutes);
+router.use('/github', githubRoutes);
 
 export default router;

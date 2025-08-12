@@ -1,12 +1,10 @@
 import { Request, Response } from 'express';
-import { User } from '../models/User';
+import { User } from '../models/user.model';
 import { asyncHandler, createError } from '../middleware/errorHandler';
 import { ApiResponse } from '../types/common';
 
 export const getUsers = asyncHandler(async (req: Request, res: Response) => {
-  const users = await User.find({ isActive: true })
-    .select('-__v')
-    .sort({ createdAt: -1 });
+  const users = await User.find().sort({ createdAt: -1 });
 
   const response: ApiResponse = {
     success: true,
@@ -19,9 +17,9 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
 
 export const getUserById = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-
-  const user = await User.findById(id).select('-__v');
+  const user = await User.findById(id);
   
+  console.log('Fetching user with ID:', user);
   if (!user) {
     throw createError('User not found', 404);
   }

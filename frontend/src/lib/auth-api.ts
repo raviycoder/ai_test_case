@@ -23,4 +23,23 @@ export const authAPI = {
   signOut: async () => {
     return authClient.signOut();
   },
+
+  // Link GitHub account
+  linkGitHub: async () => {
+    return authClient.linkSocial({
+      provider: 'github',
+      scopes:['repo'],
+      callbackURL: import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173', // Redirect after linking
+    })
+  },
+
+  getAccountData: async () => {
+    const { data } = await authClient.getSession();
+    const id = data?.user?.id;
+    if (!id) {
+      return null;
+    }
+    return authClient.accountInfo({ accountId: id });
+  },
+  // Link Status
 };

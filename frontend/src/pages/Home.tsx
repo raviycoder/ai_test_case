@@ -1,8 +1,12 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import GithubLink from '@/components/github-linking';
+import { useUser } from '@/hooks/useUser';
+import RepoDialog from '@/components/RepoDialog';
 
 const Home = () => {
-  const { user, signOut, isSigningOut } = useAuth();
+  const { signOut, isSigningOut } = useAuth();
+  const { userData } = useUser();
 
   const handleSignOut = () => {
     signOut();
@@ -16,7 +20,7 @@ const Home = () => {
             Welcome to Your Dashboard
           </h1>
           
-          {user && (
+          {userData && (
             <div className="space-y-4">
               <div className="border-b pb-4">
                 <h2 className="text-xl font-semibold text-gray-800 mb-2">
@@ -25,28 +29,28 @@ const Home = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Name</p>
-                    <p className="font-medium">{user.name || 'Not provided'}</p>
+                    <p className="font-medium">{userData.name || 'Not provided'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Email</p>
-                    <p className="font-medium">{user.email}</p>
+                    <p className="font-medium">{userData.email || 'Not provided'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">ID</p>
-                    <p className="font-mono text-sm">{user.id}</p>
+                    <p className="font-mono text-sm">{userData._id || 'Not provided'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Email Verified</p>
                     <p className="font-medium">
-                      {user.emailVerified ? '✅ Yes' : '❌ No'}
+                      {userData.emailVerified ? '✅ Yes' : '❌ No'}
                     </p>
                   </div>
                 </div>
-                {user.image && (
+                {userData.image && (
                   <div className="mt-4">
                     <p className="text-sm text-gray-600 mb-2">Avatar</p>
                     <img
-                      src={user.image}
+                      src={userData.image}
                       alt="User avatar"
                       className="w-16 h-16 rounded-full border"
                     />
@@ -54,15 +58,29 @@ const Home = () => {
                 )}
               </div>
               
-              <div className="pt-4">
-                <Button
-                  onClick={handleSignOut}
-                  disabled={isSigningOut}
-                  variant="destructive"
-                  className="w-full md:w-auto"
-                >
-                  {isSigningOut ? 'Signing out...' : 'Sign Out'}
-                </Button>
+              <div className="pt-4 space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button
+                    onClick={handleSignOut}
+                    disabled={isSigningOut}
+                    variant="destructive"
+                    className="w-full sm:w-auto"
+                  >
+                    {isSigningOut ? 'Signing out...' : 'Sign Out'}
+                  </Button>
+                  
+                  <RepoDialog 
+                    trigger={
+                      <Button variant="outline" className="w-full sm:w-auto">
+                        View Repositories
+                      </Button>
+                    }
+                  />
+                </div>
+                
+                <div>
+                  <GithubLink isLinked={userData.accountLinked} />
+                </div>
               </div>
             </div>
           )}

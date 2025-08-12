@@ -5,7 +5,6 @@ import morgan from 'morgan';
 import compression from 'compression';
 import {toNodeHandler} from 'better-auth/node'
 import rateLimit from 'express-rate-limit';
-
 import { config } from './config';
 import { connectToDatabase } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
