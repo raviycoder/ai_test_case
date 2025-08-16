@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import userRoutes from './user.route';
 import githubRoutes from './github.route';
+import aiTestRoutes from './ai_test.route';
 
 const router = Router();
 
@@ -29,5 +30,6 @@ router.get('/test', (req, res) => {
 // Mount feature routers
 router.use('/users', userRoutes);
 router.use('/github', githubRoutes);
+router.use('/ai-tests', aiTestRoutes);
 
 export default router;

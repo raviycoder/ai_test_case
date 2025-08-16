@@ -59,3 +59,13 @@ export const useRepoTree = (owner: string, repo: string, branch = 'main') => {
 
     return { tree: data, isLoading, error };
 };
+
+export const useFileContent = (owner: string, repo: string, path: string) => {
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['fileContent', owner, repo, path],
+        queryFn: () => repoAPI.getFileContent(owner, repo, path),
+        enabled: Boolean(owner && repo && path),
+    });
+
+    return { content: data, isLoading, error };
+};

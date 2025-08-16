@@ -3,6 +3,41 @@ import { getAuth } from "./auth.controller";
 import { fromNodeHeaders } from "better-auth/node";
 import axios from "axios";
 
+// Utility function to safely decode file paths
+const safeDecodeFilePath = (encodedPath: string): string => {
+    try {
+        // Handle multiple encoding scenarios
+        let decodedPath = decodeURIComponent(encodedPath);
+        
+        // If the path was double-encoded, decode again
+        if (decodedPath.includes('%')) {
+            try {
+                decodedPath = decodeURIComponent(decodedPath);
+            } catch {
+                // If second decode fails, use the first decode result
+            }
+        }
+        
+        return decodedPath;
+    } catch (error) {
+        console.warn("Failed to decode file path:", encodedPath, error);
+        // Return the original path if decoding fails
+        return encodedPath;
+    }
+};
+
+// Utility function to safely encode file paths for GitHub API
+const safeEncodeFilePath = (path: string): string => {
+    try {
+        // Split by forward slashes and encode each segment
+        return path.split('/').map(segment => encodeURIComponent(segment)).join('/');
+    } catch (error) {
+        console.warn("Failed to encode file path:", path, error);
+        // Fallback to simple encoding
+        return encodeURIComponent(path);
+    }
+};
+
 // Fetch the current user's GitHub repositories using Better Auth's access token
 export const getGithubRepos = async (req: Request, res: Response) => {
     try {
@@ -214,10 +249,159 @@ export const getRepoTree = async (req: Request, res: Response) => {
                 .json({ success: false, message: "GitHub error (tree)", data: treeRes.data });
         }
 
-        // Return tree as-is to keep flexible on the frontend
-        return res.json({ tree: treeRes.data });
+        // Filter tree to include only testable files and their containing directories
+        const rawTree = treeRes.data;
+        const testableExtensions = new Set([
+            '.js', '.jsx', '.ts', '.tsx',           // JavaScript/TypeScript
+            '.py',                                   // Python
+            '.java',                                 // Java
+            '.kt', '.kts',                          // Kotlin
+            '.cs',                                   // C#
+            '.cpp', '.cc', '.cxx', '.c',            // C/C++
+            '.php',                                  // PHP
+            '.rb',                                   // Ruby
+            '.go',                                   // Go
+            '.rs',                                   // Rust
+            '.swift',                                // Swift
+            '.dart',                                 // Dart
+            '.scala',                                // Scala
+            '.m', '.mm',                            // Objective-C
+            '.vue',                                  // Vue.js
+            '.svelte'                               // Svelte
+        ]);
+
+        // Extract testable files and build directory structure
+        const testableFiles = new Set<string>();
+        const requiredDirs = new Set<string>();
+
+        // Find all testable files
+        rawTree.tree?.forEach((item: any) => {
+            if (item.type === 'blob') {
+                const ext = item.path.substring(item.path.lastIndexOf('.'));
+                if (testableExtensions.has(ext.toLowerCase())) {
+                    testableFiles.add(item.path);
+                    
+                    // Add all parent directories to required dirs
+                    const pathParts = item.path.split('/');
+                    for (let i = 1; i < pathParts.length; i++) {
+                        const dirPath = pathParts.slice(0, i).join('/');
+                        requiredDirs.add(dirPath);
+                    }
+                }
+            }
+        });
+
+        // Filter tree to include only testable files and required directories
+        const filteredTree = rawTree.tree?.filter((item: any) => {
+            if (item.type === 'blob') {
+                return testableFiles.has(item.path);
+            } else if (item.type === 'tree') {
+                return requiredDirs.has(item.path);
+            }
+            return false;
+        }) || [];
+
+        // Return filtered tree with metadata
+        return res.json({ 
+            tree: {
+                ...rawTree,
+                tree: filteredTree
+            },
+            meta: {
+                totalFiles: rawTree.tree?.length || 0,
+                testableFiles: testableFiles.size,
+                supportedExtensions: Array.from(testableExtensions)
+            }
+        });
     } catch (err) {
         console.error("getRepoTree error:", err);
         return res.status(500).json({ success: false, message: "Failed to fetch repository tree" });
+    }
+}
+
+export const getFileContent = async (req: Request, res: Response) => {
+    const { owner, repo } = req.params;
+    // Get the wildcard path and decode it properly
+    let filePath = req.params[0] || '';
+    
+    try {
+        // Safely decode the file path that was encoded when sent from frontend
+        const decodedPath = safeDecodeFilePath(filePath);
+        
+        console.log("Original path:", filePath);
+        console.log("Decoded file path:", decodedPath);
+
+        const auth = await getAuth();
+        const tokenResp = await auth.api.getAccessToken({
+            body: { providerId: "github" },
+            headers: fromNodeHeaders(req.headers),
+        });
+
+        if (tokenResp.error || !tokenResp?.accessToken) {
+            return res.status(401).json({ success: false, message: "No provider access token" });
+        }
+
+        const accessToken = tokenResp.accessToken as string;
+
+        // Safely encode the path for GitHub API call
+        const encodedPath = safeEncodeFilePath(decodedPath);
+        console.log("Sending to GitHub API with encoded path:", encodedPath);
+
+        const axiosRes = await axios.get(`https://api.github.com/repos/${owner}/${repo}/contents/${encodedPath}`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+            validateStatus: () => true, // don't throw on non-2xx
+        });
+
+        const ghRes = {
+            ok: axiosRes.status >= 200 && axiosRes.status < 300,
+            status: axiosRes.status,
+            text: async () =>
+                typeof axiosRes.data === "string" ? axiosRes.data : JSON.stringify(axiosRes.data),
+            json: async () => axiosRes.data,
+        };
+
+        if (!ghRes.ok) {
+            const err = await ghRes.text();
+            console.error("GitHub API error:", ghRes.status, err);
+            return res.status(ghRes.status).json({ 
+                success: false, 
+                message: "GitHub error", 
+                data: err,
+                path: decodedPath 
+            });
+        }
+
+        const fileData = (await ghRes.json()) as any;
+
+        // If the file is a blob, we can return its content
+        if (fileData.type === 'file') {
+            return res.json({
+                success: true,
+                content: fileData.content,
+                encoding: fileData.encoding,
+                name: fileData.name,
+                path: decodedPath, // Return the original decoded path
+                size: fileData.size,
+                sha: fileData.sha,
+                download_url: fileData.download_url
+            });
+        }
+
+        return res.status(404).json({ 
+            success: false, 
+            message: "File not found or is not a file", 
+            path: decodedPath 
+        });
+    } catch (err) {
+        console.error("getFileContent error:", err);
+        console.error("File path that caused error:", filePath);
+        return res.status(500).json({ 
+            success: false, 
+            message: "Failed to fetch file content",
+            error: err instanceof Error ? err.message : "Unknown error",
+            path: filePath 
+        });
     }
 }

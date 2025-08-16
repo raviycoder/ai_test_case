@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ExternalLink, GitBranch, Lock, Unlock } from 'lucide-react';
+import { GitBranch, Lock, Unlock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface RepoDialogProps {

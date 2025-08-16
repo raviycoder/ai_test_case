@@ -1,6 +1,4 @@
 import {
-  Link,
-  useLocation,
   useParams,
   useSearchParams,
 } from "react-router-dom";
@@ -12,21 +10,17 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { Home, FolderTree, GitBranch } from "lucide-react";
 import TreeFile from "@/components/tree-file";
 import { useRepoTree } from "@/hooks/useGitRepo";
 import { useMemo } from "react";
+import { FolderTree } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
 
 const AppSidebar: React.FC = () => {
-  const location = useLocation();
   const { sessionId } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Read query params like: new-session?repo=ai_test_case&_branch=main&_owner=raviycoder
   const query = {
@@ -103,14 +97,15 @@ const AppSidebar: React.FC = () => {
             <SidebarGroupLabel>Repository Files</SidebarGroupLabel>
             <SidebarGroupContent>
               {items ? (
-                <div className="min-h-0 max-h-[80vh] overflow-auto">
+                <ScrollArea className="max-h-[80vh] overflow-auto">
                     <TreeFile
                       items={items}
                       rootItemId={query.repo}
                       initialExpandedItems={[query.repo]}
+                      setSearchParams={setSearchParams}
                       className=""
                     />
-                </div>
+                </ScrollArea>
               ) : (
                 <div className="text-xs text-muted-foreground px-2 py-1">
                   Loading tree…

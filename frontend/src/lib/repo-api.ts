@@ -20,5 +20,10 @@ export const repoAPI = {
   getRepoTree: async (owner: string, repo: string, branch = 'main') => {
     const res = await base.get(`/repos/${owner}/${repo}/tree`, { params: { branch } });
     return res.data;
+  },
+  getFileContent: async (owner: string, repo: string, path: string) => {
+    const res = await base.get(`/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`);
+    return res.data;
   }
+  
 };
