@@ -11,4 +11,8 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    // Workaround for esbuild error: Unexpected "\x00" in lucide-react icon files during pre-bundling
+    exclude: ["lucide-react"],
+  },
 })

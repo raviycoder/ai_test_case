@@ -181,7 +181,7 @@ export const getUserSessions = async (req: Request, res: Response) => {
 
         const sessions = await TestSession.find({ userId: sessionResp.user.id })
             .sort({ createdAt: -1 }) // Most recent first
-            .select('sessionId repositoryId repoBranch status framework processingTimeMs createdAt completedAt');
+            .select('sessionId repositoryId repoBranch status framework processingTimeMs createdAt defaultPath completedAt');
 
         return res.status(200).json({
             success: true,

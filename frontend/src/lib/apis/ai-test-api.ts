@@ -1,10 +1,22 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
+import { ungzip } from "pako";
+import type { ReactNode } from "react";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/";
 
 // Configure axios for AI test endpoints
 const aiTestApi = axios.create({
   baseURL: `${API_BASE_URL}/api/ai-tests`,
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Configure axios for Inngest endpoints
+const inngestApi = axios.create({
+  baseURL: `${API_BASE_URL}/api/inngest`,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -76,6 +88,7 @@ export interface TestSession {
   sessionId: string;
   repositoryId?: string;
   repoBranch?: string;
+  defaultPath?: string;
   status: "pending" | "processing" | "completed" | "failed";
   framework: string;
   selectedFiles: Array<{
@@ -183,6 +196,16 @@ export interface TestFileMetadataDto {
 }
 
 export interface TestFileDto {
+  validation: any;
+  originalFilePath: ReactNode;
+  summary: any;
+  coverageScore: any;
+  metadata: any;
+  status: ReactNode;
+  sessionId: ReactNode;
+  validationSummary: any;
+  testCode:any;
+  suggestedTestFileName: string;
   data: {
     sessionId: string;
     id: string;
@@ -193,7 +216,7 @@ export interface TestFileDto {
     summary: TestFileSummaryDto;
     validation: ValidationResult;
     metadata: TestFileMetadataDto;
-    status: "draft" | "generated" | "saved" | "applied";
+    status: string;
     validationSummary: ValidationSummaryDto;
     coverageScore: CoverageScore;
   };
@@ -446,6 +469,8 @@ export const getTestFileByPath = async (
     );
 
     if (response.data) {
+      const testCode = await convertToText(response.data.data.testCode.data);
+      console.log("👋👋Test code:", response.data.data.testCode, testCode);
       return response.data as TestFileDto;
     }
   } catch (error) {
@@ -453,6 +478,103 @@ export const getTestFileByPath = async (
   }
 
   return null;
+};
+
+export const convertToText = async (compressedData: string | null) => {
+    if (!compressedData) return null;
+    
+    try {
+        // Decode base64 to binary string
+        const binaryString = atob(compressedData);
+    
+        // Convert binary string to Uint8Array
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+        }
+    
+        // Decompress using pako
+        const decompressed = ungzip(bytes, { to: 'string' });
+        return decompressed;
+    } catch (error) {
+        console.error("Decompression error:", error);
+        return null;
+    }
+}
+
+export const getTestFilePaths = async (
+  sessionId: string,
+  repositoryId: string): Promise<string[]> => {
+
+    try {
+      const response = await aiTestApi.get(`/repositories/${repositoryId}/${sessionId}`);
+      return response.data.testFiles as string[];
+    } catch (error) {
+      console.error("Error fetching test file paths:", error);
+      return [];
+    }
+  }
+
+// Background test generation with Inngest
+export interface BackgroundTestGenerationRequest {
+  repositoryId: string;
+  sessionId?: string;
+  files: Array<{
+    path: string;
+    content: string;
+    framework?: string;
+  }>;
+  framework: string;
+  repoBranch?: string;
+  options?: {
+    testTypes?: string[];
+    coverage?: "basic" | "comprehensive";
+    includeEdgeCases?: boolean;
+    mockExternal?: boolean;
+  };
+}
+
+export interface BackgroundTestGenerationResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    sessionId: string;
+    eventId: string;
+    status: string;
+    totalFiles: number;
+    framework: string;
+    estimatedTime: string;
+  };
+  error?: string;
+}
+
+export const triggerBackgroundTestGeneration = async (
+  requestData: BackgroundTestGenerationRequest
+): Promise<BackgroundTestGenerationResponse> => {
+  try {
+    const response = await inngestApi.post("/trigger", requestData);
+    return response.data;
+  } catch (error) {
+    console.error("Error triggering background test generation:", error);
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || "Failed to trigger background test generation");
+    }
+    throw error;
+  }
+};
+
+export const getBackgroundTestStatus = async (sessionId: string) => {
+  try {
+    const response = await inngestApi.get(`/status/${sessionId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting background test status:", error);
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || "Failed to get background test status");
+    }
+    throw error;
+  }
 };
 
 export default aiTestApi;

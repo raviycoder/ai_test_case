@@ -5,6 +5,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { Skeleton } from "@/components/ui/skeleton";
 import useAITestGeneration from "@/hooks/useAITestGeneration";
 import { useFileContent } from "@/hooks/useGitRepo";
 import { useEffect } from "react";
@@ -37,6 +38,25 @@ const FilesDashboard = () => {
 
 
   const decodedContent = content?.content ? atob(content.content) : "";
+
+  if (isLoading) return( 
+        <div className="max-w-full h-full">
+        <div className=" ">
+          <ResizablePanelGroup
+            direction="horizontal"
+            className="max-w-md md:min-w-full"
+          >
+            <ResizablePanel defaultSize={50} minSize={30} className="p-8">
+              <Skeleton className="h-[600px] w-full mt-12 bg-gray-200" />
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={50} minSize={30} className="p-8">
+              <Skeleton className="h-[600px] w-full mt-12 bg-gray-200" />
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </div>
+    </div>
+  );
   return (
     <div className="max-w-full h-full">
       <code>{error}</code>

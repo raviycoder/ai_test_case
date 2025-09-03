@@ -1,4 +1,4 @@
-import { repoAPI } from '@/lib/repo-api';
+import { repoAPI } from '@/lib/apis/repo-api';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 export const useGitRepo = () => {

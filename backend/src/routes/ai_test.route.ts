@@ -6,7 +6,8 @@ import {
   getTestFiles,
   getTestFilesByRepository,
   updateTestFileStatus,
-  getTestFileByPath
+  getTestFileByPath,
+  getTestFilePaths
 } from '../controllers/ai_test.controller';
 import { createTestSession, getUserSessions } from '../controllers/test_session.controller';
 
@@ -37,7 +38,11 @@ router.get('/test-file/:sessionId/:filePath*', getTestFileByPath);
 // Get test files for a repository
 router.get('/repositories/:repositoryId/test-files', getTestFilesByRepository);
 
+// Get only paths of test files
+router.get('/repositories/:repositoryId/:sessionId', getTestFilePaths);
+
 // Update test file status
 router.patch('/test-files/:testFileId', updateTestFileStatus);
+
 
 export default router;

@@ -10,6 +10,8 @@ import { connectToDatabase } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
 import routes from './routes';
 import { getAuth } from './controllers/auth.controller';
+import { serve } from "inngest/express";
+import { inngest, functions } from "./services/inngest/index";
 
 // Create Express app
 const app = express();
@@ -18,14 +20,14 @@ const app = express();
 app.use(helmet());
 
 // Rate limiting
-const limiter = rateLimit({
-  windowMs: config.RATE_LIMIT_WINDOW_MS, // 15 minutes
-  max: config.RATE_LIMIT_MAX_REQUESTS, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use(limiter);
+// const limiter = rateLimit({
+//   windowMs: config.RATE_LIMIT_WINDOW_MS, // 15 minutes
+//   max: config.RATE_LIMIT_MAX_REQUESTS, // limit each IP to 100 requests per windowMs
+//   message: 'Too many requests from this IP, please try again later.',
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// });
+// app.use(limiter);
 
 // CORS configuration
 app.use(cors({
@@ -71,6 +73,9 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api', routes);
+
+// Inngest serve endpoint - keep after API routes to avoid intercepting custom /api/inngest/* routes
+app.use("/api/inngest", serve({ client: inngest, functions }));
 
 // 404 handler for undefined routes
 app.use('*', (req, res) => {

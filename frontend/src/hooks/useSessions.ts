@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getUserSessions } from '@/lib/ai-test-api';
+import { getUserSessions } from '@/lib/apis/ai-test-api';
 import { useAuth } from './useAuth';
 
 export const useSessions = () => {

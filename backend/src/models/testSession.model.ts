@@ -6,6 +6,7 @@ export interface ITestSession extends Document {
 	userId: Types.ObjectId;
 	repositoryId: string;
 	repoBranch?: string;
+	defaultPath?: string;
 	sessionId: string;
 	status: TestSessionStatus;
 	framework?: string; // overall framework selected for session, e.g. jest
@@ -20,6 +21,7 @@ const TestSessionSchema = new Schema<ITestSession>(
 		userId: { type: Schema.Types.ObjectId, required: true },
 		repositoryId: { type: String, required: true },
 		repoBranch: { type: String, trim: true },
+		defaultPath: {type: String, default: ""},
 		sessionId: { type: String, required: true },
 		status: {
 			type: String,

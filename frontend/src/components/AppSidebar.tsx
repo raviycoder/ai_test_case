@@ -14,9 +14,10 @@ import {
 } from "@/components/ui/sidebar";
 import TreeFile from "@/components/tree-file";
 import { useRepoTree } from "@/hooks/useGitRepo";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { FolderTree } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
+import useAITestGeneration from "@/hooks/useAITestGeneration";
 
 const AppSidebar: React.FC = () => {
   const { sessionId } = useParams();
@@ -32,6 +33,15 @@ const AppSidebar: React.FC = () => {
 
   console.log("route:", { sessionId });
   console.log("new-session query:", query);
+
+  const { testFilePaths, getTestFilePaths } = useAITestGeneration();
+
+  useEffect(()=>{
+    if (sessionId !== "new-session"){
+      getTestFilePaths(sessionId as string, `${query.owner}%2F${query.repo}`);
+      console.log("Fetching test file paths for session:", testFilePaths);
+    }
+  });
 
   const { tree } = useRepoTree(query.owner, query.repo, query.branch || "main");
 
@@ -101,8 +111,10 @@ const AppSidebar: React.FC = () => {
                     <TreeFile
                       items={items}
                       rootItemId={query.repo}
+                      testFiles={testFilePaths as string[]}
                       initialExpandedItems={[query.repo]}
                       setSearchParams={setSearchParams}
+                      searchParams={searchParams}
                       className=""
                     />
                 </ScrollArea>

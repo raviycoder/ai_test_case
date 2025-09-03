@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { authAPI } from '@/lib/auth-api';
+import { authAPI } from '@/lib/apis/auth-api';
 
 // Auth hook using React Query
 export const useAuth = () => {

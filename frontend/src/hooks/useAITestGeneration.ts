@@ -4,6 +4,7 @@ import {
   createTestSession,
   generateTests,
   getTestStatus,
+  getTestFilePaths as getTestFilePathsApi,
   getTestFileByPath as getTestFileByPathApi,
   type TestGenerationRequest,
   type GenerationUpdate,
@@ -11,7 +12,8 @@ import {
   type TestSession,
   type GenerationResult,
   type TestFileDto,
-} from '../lib/ai-test-api';
+} from '../lib/apis/ai-test-api';
+import { convertToText } from './use-convert-to-text';
 
 interface UseAITestGenerationOptions {
   onUpdate?: (update: GenerationUpdate) => void;
@@ -22,6 +24,7 @@ interface UseAITestGenerationOptions {
 interface UseAITestGenerationReturn {
   // State
   session: TestSession | null;
+  testFilePaths: string[];
   isGenerating: boolean;
   testFile: TestFileDto | null;
   isLoading: boolean;
@@ -35,6 +38,7 @@ interface UseAITestGenerationReturn {
   startGeneration: (request: Omit<TestGenerationRequest, 'sessionId'>) => Promise<void>;
   refreshStatus: () => Promise<void>;
   getTestFileByPath: (filePath: string, sessionId?: string) => Promise<TestFileDto | null>;
+  getTestFilePaths: (sessionId: string, repositoryId: string) => Promise<string[]>;
   // Hydrate from an existing session id (e.g., from URL)
   hydrateSession: (sessionId: string) => Promise<void>;
   reset: () => void;
@@ -45,6 +49,7 @@ export const useAITestGeneration = (options: UseAITestGenerationOptions = {}): U
 
   // State
   const [session, setSession] = useState<TestSession | null>(null);
+  const [testFilePaths, setTestFilePaths] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -186,7 +191,7 @@ export const useAITestGeneration = (options: UseAITestGenerationOptions = {}): U
         queryFn: () => getTestFileByPathApi(providedSessionId ?? session?.sessionId ?? '', filePath),
       });
       if (dto) {
-        setTestFile(dto as unknown as TestFileDto);
+        setTestFile({ ...dto.data, testCode: convertToText(dto.data.testCode as unknown as { data: number[] }) } as unknown as TestFileDto);
         return dto;
       } else {
         setTestFile(null);
@@ -201,10 +206,29 @@ export const useAITestGeneration = (options: UseAITestGenerationOptions = {}): U
     }
   }, [queryClient, session?.sessionId]);
 
+  // get Test File Paths
+    const getTestFilePaths = useCallback(async (sessionId: string, repositoryId: string) => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const paths = await queryClient.fetchQuery({
+          queryKey: ['test-file-paths', sessionId, repositoryId],
+          queryFn: () => getTestFilePathsApi(sessionId, repositoryId),
+        });
+        setTestFilePaths(paths as string[]);
+        return paths as string[];
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to get test file paths';
+        setError(errorMessage);
+        return [];
+      }
+  }, [queryClient]);
+
   return {
     // State
     session,
     testFile,
+    testFilePaths,
     isGenerating,
     isLoading,
     error,
@@ -216,10 +240,12 @@ export const useAITestGeneration = (options: UseAITestGenerationOptions = {}): U
     createSession,
     startGeneration,
     refreshStatus,
-  hydrateSession,
+    hydrateSession,
     getTestFileByPath,
+    getTestFilePaths,
     reset,
   };
-};
+}
+
 
 export default useAITestGeneration;

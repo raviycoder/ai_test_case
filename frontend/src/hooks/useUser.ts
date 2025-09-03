@@ -1,4 +1,4 @@
-import { userAPI } from "@/lib/user-api";
+import { userAPI } from "@/lib/apis/user-api";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from "./useAuth";
 

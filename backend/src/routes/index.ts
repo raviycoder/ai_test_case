@@ -2,6 +2,8 @@ import { Router } from 'express';
 import userRoutes from './user.route';
 import githubRoutes from './github.route';
 import aiTestRoutes from './ai_test.route';
+import inngestRoutes from './inngest.route';
+import realtimeRoutes from './realtime.route';
 
 const router = Router();
 
@@ -31,5 +33,7 @@ router.get('/test', (req, res) => {
 router.use('/users', userRoutes);
 router.use('/github', githubRoutes);
 router.use('/ai-tests', aiTestRoutes);
+router.use('/inngest', inngestRoutes);
+router.use('/realtime', realtimeRoutes);
 
 export default router;

@@ -4,6 +4,7 @@ import { getAuth } from "./auth.controller";
 import { fromNodeHeaders } from "better-auth/node";
 import TestSession from "../models/testSession.model";
 import TestFile from "../models/testFile.model";
+import { compressTest } from "../services/compress";
 import { Types } from "mongoose";
 
 // Utility function to safely decode file paths
@@ -11,7 +12,7 @@ const safeDecodeFilePath = (path: string): string => {
   try {
     // Try decoding once
     let decoded = decodeURIComponent(path);
-    
+
     // Check if it needs another round of decoding (double-encoded)
     try {
       const doubleDecoded = decodeURIComponent(decoded);
@@ -20,7 +21,7 @@ const safeDecodeFilePath = (path: string): string => {
     } catch {
       // Single encoding was correct
     }
-    
+
     console.log(`Path decoding: original="${path}", decoded="${decoded}"`);
     return decoded;
   } catch (error) {
@@ -327,6 +328,7 @@ export const generateTests = async (req: Request, res: Response) => {
     // Update session status
     session.status = "processing";
     session.framework = framework;
+    session.defaultPath = files[0]?.path || "";
     await session.save();
 
     // Send initial response with streaming headers for real-time updates
@@ -459,7 +461,8 @@ export const generateTests = async (req: Request, res: Response) => {
             userId: sessionResp.user.id,
             repositoryId: session.repositoryId,
             originalFilePath: file.path,
-            testCode: generatedTest.testCode,
+            compressionAlgo: "gzip",
+            testCode: compressTest(generatedTest.testCode, "gzip"),
             summary: {
               description: generatedTest.summary.description,
               testCount: generatedTest.summary.testCount,
@@ -878,7 +881,8 @@ export const generateTestsDirect = async (req: Request, res: Response) => {
               userId: sessionResp.user.id,
               repositoryId: repositoryId,
               originalFilePath: test.filePath,
-              testCode: test.testCode,
+              testCode: compressTest(test.testCode, "gzip"),
+              compressionAlgo: "gzip",
               summary: {
                 description: test.summary.description,
                 testCount: test.summary.testCount,
@@ -1044,6 +1048,11 @@ export const getTestFiles = async (req: Request, res: Response) => {
       isActive: true,
     }).sort({ "metadata.generatedAt": -1 });
 
+    console.log(
+      "🤝🤝 khelooere",
+      testFiles.map((file) => file.testCode)
+    );
+
     return res.json({
       success: true,
       data: {
@@ -1088,10 +1097,10 @@ export const getTestFileByPath = async (req: Request, res: Response) => {
     }
 
     const { filePath, sessionId } = req.params;
-    
+
     // Decode the file path to handle special characters
     const decodedFilePath = safeDecodeFilePath(filePath);
-    
+
     console.log(
       "Fetching test file for path:",
       decodedFilePath,
@@ -1113,7 +1122,6 @@ export const getTestFileByPath = async (req: Request, res: Response) => {
         message: "Test file not found",
       });
     }
-
     return res.json({
       success: true,
       data: {
@@ -1268,3 +1276,115 @@ export const updateTestFileStatus = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getTestFilePaths = async (req: Request, res: Response) => {
+  try {
+    const { repositoryId, sessionId } = req.params;
+
+    const repository = decodeURIComponent(repositoryId);
+
+    const session_id = await TestSession.findOne({
+      sessionId: sessionId,
+    });
+    // Get test files for this repository
+    const testFiles = await TestFile.getPathNames(
+      repository,
+      new Types.ObjectId(session_id as unknown as string)
+    );
+
+    return res.json({
+      success: true,
+      testFiles,
+    });
+  } catch (error) {
+    console.error("Get test file paths error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve test file paths",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+// Extract core test generation logic for reuse
+export const generateTestForFile = async (
+  fileContent: string,
+  filePath: string,
+  framework: string,
+  options: any = {}
+) => {
+  const startTime = Date.now();
+
+  try {
+    // Generate code summary
+    const summaryPrompt = createCodeSummaryPrompt(fileContent);
+    const summaryResult = await geminiAI.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: summaryPrompt,
+    });
+    const summaryResponse = summaryResult.text || "";
+
+    let codeSummary;
+    try {
+      const cleanResponse = summaryResponse
+        .replace(/```json\n?|\n?```/g, "")
+        .trim();
+      codeSummary = JSON.parse(cleanResponse);
+    } catch (e) {
+      codeSummary = {
+        functions: [],
+        classes: [],
+        dependencies: [],
+        complexity: "medium",
+        testability: "medium",
+      };
+    }
+
+    // Generate test prompt
+    const prompt = createTestPrompt(fileContent, framework, options);
+    const result = await geminiAI.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
+
+    const text = result.text || "";
+
+    // Parse the AI response
+    const cleanedText = text.replace(/```json\n?|\n?```/g, "").trim();
+    const testData = JSON.parse(cleanedText);
+
+    // Validate the generated test
+    const validation = await validateTestCode(testData.testCode, framework);
+
+    const generatedTest = {
+      filePath,
+      testCode: testData.testCode,
+      summary: {
+        description: testData.analysis?.description || "Generated test",
+        testCount: testData.summary?.testCount || 0,
+        coverageAreas: testData.summary?.coverageAreas || [],
+        framework,
+        dependencies: testData.summary?.dependencies || [],
+      },
+      validation,
+      metadata: {
+        generatedAt: new Date(),
+        tokensUsed: {
+          prompt: result.usageMetadata?.promptTokenCount || 0,
+          response: result.usageMetadata?.candidatesTokenCount || 0,
+        },
+        model: "gemini-2.5-flash",
+        processingTime: Date.now() - startTime,
+      },
+      codeSummary,
+    };
+
+    return generatedTest;
+  } catch (error) {
+    console.error(`Error generating test for ${filePath}:`, error);
+    throw error;
+  }
+};
+
+// Export utility functions for reuse
+export { createTestPrompt, createCodeSummaryPrompt, validateTestCode, safeDecodeFilePath, geminiAI };

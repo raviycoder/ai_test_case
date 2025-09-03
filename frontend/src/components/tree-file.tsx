@@ -3,6 +3,7 @@ import { useTree } from "@headless-tree/react";
 import { FileIcon, FolderIcon, FolderOpenIcon } from "lucide-react";
 
 import { Tree, TreeItem, TreeItemLabel } from "@/components/ui/tree";
+import { Badge } from "./ui/badge";
 
 export interface Item {
   name: string;
@@ -11,9 +12,11 @@ export interface Item {
 
 export interface TreeFileProps {
   items: Record<string, Item>;
+  testFiles: string[];
   rootItemId: string;
   initialExpandedItems?: string[];
   setSearchParams: (params: URLSearchParams | ((prev: URLSearchParams) => URLSearchParams)) => void;
+  searchParams?: URLSearchParams;
   indent?: number;
   className?: string;
 }
@@ -22,10 +25,12 @@ const DEFAULT_INDENT = 20;
 
 export default function TreeFile({
   items,
+  testFiles,
   rootItemId,
   initialExpandedItems = [rootItemId],
   indent = DEFAULT_INDENT,
   setSearchParams,
+  searchParams,
   className,
 }: TreeFileProps) {
   const tree = useTree<Item>({
@@ -79,53 +84,40 @@ export default function TreeFile({
           indent={indent}
           tree={tree}
         >
-          {tree.getItems().map((item) => {
+            {tree.getItems().map((item) => {
             return (
               <TreeItem key={item.getId()} item={item}>
-                <TreeItemLabel className="before:bg-background relative before:absolute before:inset-x-0 before:-inset-y-0.5 before:-z-10">
-                  <span className="flex items-center gap-2">
-                    {item.isFolder() ? (
-                      item.isExpanded() ? (
-                        <FolderOpenIcon className="text-muted-foreground pointer-events-none size-4" />
-                      ) : (
-                        <FolderIcon className="text-muted-foreground pointer-events-none size-4" />
-                      )
-                    ) : (
-                      <FileIcon className="text-muted-foreground pointer-events-none size-4" />
-                    )}
-                    {!item.isFolder() ? (
-                      <span
-                      className="cursor-pointer hover:underline"
-                      onClick={() => addFilePath(item.getId())}
-                      >
-                      {item.getItemName()}
-                      </span>
-                    ) : (
-                      item.getItemName()
-                    )}
+              <TreeItemLabel className={`before:bg-background relative before:absolute before:inset-x-0 before:-inset-y-0.5 before:-z-10 ${searchParams?.get("_file") === item.getId() ? "font-semibold bg-muted" : ""}`}>
+                <span className="flex items-center gap-2">
+                {item.isFolder() ? (
+                  item.isExpanded() ? (
+                  <FolderOpenIcon className="text-muted-foreground pointer-events-none size-4" />
+                  ) : (
+                  <FolderIcon className="text-muted-foreground pointer-events-none size-4" />
+                  )
+                ) : (
+                  <FileIcon className="text-muted-foreground pointer-events-none size-4" />
+                )}
+                {!item.isFolder() ? (
+                  <span
+                  className="cursor-pointer hover:underline"
+                  onClick={() => addFilePath(item.getId())}
+                  >
+                  {item.getItemName()}
                   </span>
-                </TreeItemLabel>
+                ) : (
+                  item.getItemName()
+                )}
+                {testFiles.includes(item.getId()) && (
+                  <Badge variant="default" className="text-xs bg-amber-500/80 p-1 hover:bg-amber-500/80">test</Badge>
+                )}
+                </span>
+              </TreeItemLabel>
               </TreeItem>
             );
-          })}
+            })}
         </Tree>
       </div>
-
-      <p
-        aria-live="polite"
-        role="region"
-        className="text-muted-foreground mt-2 text-xs"
-      >
-        Basic tree with icons ∙{" "}
-        <a
-          href="https://headless-tree.lukasbach.com"
-          className="hover:text-foreground underline"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          API
-        </a>
-      </p>
     </div>
   );
 }
