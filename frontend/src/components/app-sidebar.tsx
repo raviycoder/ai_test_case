@@ -1,4 +1,5 @@
 import {
+  Link,
   useParams,
   useSearchParams,
 } from "react-router-dom";
@@ -13,11 +14,11 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import TreeFile from "@/components/tree-file";
-import { useRepoTree } from "@/hooks/useGitRepo";
+import { useRepoTree } from "@/hooks/use-git-repo";
 import { useEffect, useMemo } from "react";
 import { FolderTree } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
-import useAITestGeneration from "@/hooks/useAITestGeneration";
+import useAITestGeneration from "@/hooks/use-ai-test-generation";
 
 const AppSidebar: React.FC = () => {
   const { sessionId } = useParams();
@@ -96,7 +97,7 @@ const AppSidebar: React.FC = () => {
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-1">
           <FolderTree className="w-5 h-5" />
-          <span className="font-semibold">AI Test App</span>
+          <Link to={'/'} className="font-semibold">AI Test App</Link>
         </div>
       </SidebarHeader>
 
@@ -104,7 +105,7 @@ const AppSidebar: React.FC = () => {
         {/* Repository Files tree */}
         {query.owner && query.repo ? (
           <SidebarGroup className="overflow-hidden">
-            <SidebarGroupLabel>Repository Files</SidebarGroupLabel>
+            <SidebarGroupLabel>{query.repo}</SidebarGroupLabel>
             <SidebarGroupContent>
               {items ? (
                 <ScrollArea className="max-h-[80vh] overflow-auto">

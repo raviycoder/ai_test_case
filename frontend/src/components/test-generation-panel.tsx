@@ -3,8 +3,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { XCircle } from "lucide-react";
 import { fetchFileContent } from "../lib/apis/ai-test-api";
 import type { GeneratedTest, TestFileDto } from "../lib/apis/ai-test-api";
-import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import useAITestGeneration from "../hooks/useAITestGeneration";
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
+import useAITestGeneration from "../hooks/use-ai-test-generation";
 import useRealtimeTestGeneration from "@/hooks/use-realtime-test-generation";
 import {
   TestGenerationForm,
@@ -34,14 +39,12 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
   const [specificTestFile, setSpecificTestFile] = useState<TestFileDto | null>(
     null
   );
-  const [useBackgroundGeneration, setUseBackgroundGeneration] = useState(true);
   const params = useParams();
-
   const routeSessionId = params.sessionId;
 
   // Background test generation hook
   const {
-    isGenerating: isBackgroundGenerating,
+    isGenerating,
     error: backgroundError,
     progress: backgroundProgress,
     currentStep: backgroundStep,
@@ -68,7 +71,6 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
 
   // Original synchronous generation hook
   const {
-    isGenerating,
     error,
     testFile,
     generatedTests,
@@ -87,7 +89,7 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
       console.error(err);
     },
   });
-    const [searchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   // Read query params like: new-session?repo=ai_test_case&_branch=main&_owner=raviycoder
   const query = {
@@ -156,7 +158,7 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
 
       // Early returns to prevent unnecessary API calls
       if (selectedFiles.length === 0) return;
-      if (isGenerating || isBackgroundGenerating) return;
+      if (isGenerating) return;
       if (generatedTests.length > 0) return;
       if (backgroundGeneratedTest !== null) return;
       if (specificTestFile !== null) return; // Already have data
@@ -164,17 +166,26 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
       // Only fetch if we have both filePath and sessionId
       if (filePath && routeSessionId && routeSessionId !== "new-session") {
         try {
-          console.log("🔍 Fetching saved tests step 2: calling getTestFileByPath");
+          console.log(
+            "🔍 Fetching saved tests step 2: calling getTestFileByPath"
+          );
           await getTestFileByPath(filePath, routeSessionId);
-          
+
           if (testFile) {
-            console.log("🔍 Fetching saved tests step 3: found test file data", testFile);
-            
+            console.log(
+              "🔍 Fetching saved tests step 3: found test file data",
+              testFile
+            );
+
             // Set the fetched test file directly since getTestFileByPath returns TestFileDto
             setSpecificTestFile(testFile);
-            console.log("🔍 Fetching saved tests step 4: set specificTestFile state");
+            console.log(
+              "🔍 Fetching saved tests step 4: set specificTestFile state"
+            );
           } else {
-            console.log("🔍 Fetching saved tests: no test file found, waiting for realtime data");
+            console.log(
+              "🔍 Fetching saved tests: no test file found, waiting for realtime data"
+            );
             // If no existing test file, wait for realtime generation
             // backgroundGeneratedTest will be set by the realtime hook when data arrives
           }
@@ -188,9 +199,26 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
     // Only run if we don't already have data
     if (!specificTestFile && !backgroundGeneratedTest) {
       fetchSavedTests();
-      getTestFilePaths(query.sessionId as string, `${query.owner}%2F${query.repo}`);
+      getTestFilePaths(
+        query.sessionId as string,
+        `${query.owner}%2F${query.repo}`
+      );
     }
-  }, [selectedFiles.length, isGenerating, isBackgroundGenerating, generatedTests.length, filePath, routeSessionId, getTestFileByPath, specificTestFile, backgroundGeneratedTest, testFile, getTestFilePaths, query.owner, query.repo, query.sessionId]);
+  }, [
+    selectedFiles.length,
+    isGenerating,
+    generatedTests.length,
+    filePath,
+    routeSessionId,
+    getTestFileByPath,
+    specificTestFile,
+    backgroundGeneratedTest,
+    testFile,
+    getTestFilePaths,
+    query.owner,
+    query.repo,
+    query.sessionId,
+  ]);
 
   // Handle realtime data fallback when no existing data found
   useEffect(() => {
@@ -211,7 +239,7 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
       const newId = globalThis.crypto?.randomUUID
         ? globalThis.crypto.randomUUID()
         : `sess_${Date.now()}`;
-      
+
       // Update URL with new session ID
       const search = location.search || window.location.search || "";
       navigate(`/file-test-case/${newId}${search}`, { replace: true });
@@ -232,7 +260,7 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
       mockExternal: true,
     };
 
-    if (useBackgroundGeneration) {
+    if (isGenerating === false) {
       // Send data to Inngest backend - it handles session creation and data saving
       try {
         await startBackgroundGeneration({
@@ -257,7 +285,7 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
   };
 
   const reset = () => {
-    if (useBackgroundGeneration) {
+    if (isGenerating) {
       resetBackground();
     }
     // Reset for sync generation if needed
@@ -267,26 +295,28 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
   // Show loading skeleton only when:
   // 1. Still loading file contents, OR
   // 2. Waiting for a specific test file from URL params AND no data is available yet
-  const isLoadingInitialData = 
-    isLoadingFiles || 
-    (!!filePath && !!routeSessionId && !specificTestFile && !isGenerating && !isBackgroundGenerating);
+  const isLoadingInitialData =
+    isLoadingFiles ||
+    (!!filePath &&
+      !!routeSessionId &&
+      !specificTestFile &&
+      !isGenerating &&
+      !isGenerating);
 
   // Check if we have any data to display (tests, errors, or generation in progress)
-  const hasDataToDisplay = 
+  const hasDataToDisplay =
     generatedTests.length === 0 ||
     backgroundGeneratedTest !== null ||
     specificTestFile ||
     error ||
     backgroundError ||
     isGenerating ||
-    isBackgroundGenerating;
+    isGenerating;
 
   // Only show skeleton if we're loading initial data AND don't have any data to display
   // This prevents showing skeleton when user has results, errors, or generation is active
   if (isLoadingInitialData && !hasDataToDisplay) {
-    return (
-      <Skeleton className="h-[600px] w-full mt-12 bg-gray-200" />
-    );
+    return <Skeleton className="h-[600px] w-full mt-12 bg-gray-200" />;
   }
 
   return (
@@ -296,27 +326,27 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
         backgroundGeneratedTest === null &&
         !specificTestFile && (
           <>
-            <TestGenerationForm
-              framework={framework}
-              onFrameworkChange={setFramework}
-              useBackgroundGeneration={useBackgroundGeneration}
-              onBackgroundGenerationChange={setUseBackgroundGeneration}
-              selectedFiles={selectedFiles}
-              fileContents={fileContents}
-              isLoadingFiles={isLoadingFiles}
-              isGenerating={isGenerating}
-              isBackgroundGenerating={isBackgroundGenerating}
-              onStartGeneration={handleStartGeneration}
-              onStopGeneration={stopBackgroundGeneration}
-              onReset={reset}
-              hasResults={
-                generatedTests.length > 0 || backgroundGeneratedTest !== null
-              }
-              hasError={!!(error || backgroundError)}
-            />
+            {!isGenerating && (
+              <TestGenerationForm
+                framework={framework}
+                onFrameworkChange={setFramework}
+                selectedFiles={selectedFiles}
+                fileContents={fileContents}
+                isLoadingFiles={isLoadingFiles}
+                isGenerating={isGenerating}
+                isBackgroundGenerating={isGenerating}
+                onStartGeneration={handleStartGeneration}
+                onStopGeneration={stopBackgroundGeneration}
+                onReset={reset}
+                hasResults={
+                  generatedTests.length > 0 || backgroundGeneratedTest !== null
+                }
+                hasError={!!(error || backgroundError)}
+              />
+            )}
 
             <TestGenerationProgress
-              isGenerating={useBackgroundGeneration && isBackgroundGenerating}
+              isGenerating={isGenerating}
               progress={backgroundProgress}
               currentStep={backgroundStep}
               currentMessage={backgroundMessage}

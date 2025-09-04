@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getUserSessions } from '@/lib/apis/ai-test-api';
-import { useAuth } from './useAuth';
+import { useAuth } from './use-auth';
 
 export const useSessions = () => {
   const { user } = useAuth();

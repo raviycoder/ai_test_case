@@ -24,8 +24,6 @@ import {
 interface TestGenerationFormProps {
   framework: string;
   onFrameworkChange: (framework: string) => void;
-  useBackgroundGeneration: boolean;
-  onBackgroundGenerationChange: (value: boolean) => void;
   selectedFiles: string[];
   fileContents: Record<string, string>;
   isLoadingFiles: boolean;
@@ -41,8 +39,6 @@ interface TestGenerationFormProps {
 export const TestGenerationForm: React.FC<TestGenerationFormProps> = ({
   framework,
   onFrameworkChange,
-  useBackgroundGeneration,
-  onBackgroundGenerationChange,
   selectedFiles,
   fileContents,
   isLoadingFiles,
@@ -87,35 +83,10 @@ export const TestGenerationForm: React.FC<TestGenerationFormProps> = ({
             </Select>
           </div>
 
-          {/* Generation Mode Toggle */}
-          <div className="flex items-center gap-4">
-            <label className="text-sm font-medium">
-              Generation Mode:
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="backgroundMode"
-                checked={useBackgroundGeneration}
-                onChange={(e) => onBackgroundGenerationChange(e.target.checked)}
-                disabled={isGenerating || isBackgroundGenerating}
-                className="rounded"
-              />
-              <label htmlFor="backgroundMode" className="text-sm">
-                Background Generation (Recommended)
-              </label>
-            </div>
-            {useBackgroundGeneration && (
-              <span className="text-xs text-gray-500">
-                ⚡ Faster, non-blocking with real-time progress
-              </span>
-            )}
-          </div>
-
           {/* Selected Files */}
           <div>
             <label className="text-sm font-medium">
-              Selected Files ({selectedFiles.length}):
+              Selected File:
             </label>
             <div className="mt-1 space-y-1">
               {selectedFiles.map((file) => (
@@ -151,11 +122,11 @@ export const TestGenerationForm: React.FC<TestGenerationFormProps> = ({
                 <Play className="h-4 w-4" />
               )}
               {(isGenerating || isBackgroundGenerating) 
-                ? (useBackgroundGeneration ? "Generating in Background..." : "Generating...") 
-                : "Generate Tests"}
+                ? (isBackgroundGenerating ? "Generating in Background..." : "Generating...") 
+                : "Generate Test with AI"}
             </Button>
 
-            {useBackgroundGeneration && isBackgroundGenerating && onStopGeneration && (
+            {isBackgroundGenerating && onStopGeneration && (
               <Button variant="outline" onClick={onStopGeneration}>
                 Stop Generation
               </Button>

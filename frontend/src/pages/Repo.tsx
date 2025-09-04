@@ -1,4 +1,4 @@
-import RepoDialog from '@/components/RepoDialog';
+import RepoDialog from '@/components/repo-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { GitBranch, Github, Code2, ArrowLeft } from 'lucide-react';

@@ -1,5 +1,5 @@
 import { Button } from "./ui/button";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 import { Github, Loader2 } from "lucide-react";
 
 const GitHubLoginButton = () => {

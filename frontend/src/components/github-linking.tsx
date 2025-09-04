@@ -1,4 +1,4 @@
-import { useLink } from "@/hooks/useLink";
+import { useLink } from "@/hooks/use-link";
 import { Button } from "./ui/button";
 import { Github, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "./ui/alert";

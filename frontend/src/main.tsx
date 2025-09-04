@@ -3,14 +3,14 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Login from "./pages/Login.tsx";
-import Home from "./pages/Home.tsx";
-import ProtectedRoute from "./components/ProtectedRoute.tsx";
+import Login from "./pages/login.tsx";
+import Home from "./pages/home.tsx";
+import ProtectedRoute from "./components/protecte-route.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Repo from "./pages/Repo.tsx";
-import FilesDashboard from "./pages/FilesDashboard.tsx";
+import Repo from "./pages/repo.tsx";
+import FilesDashboard from "./pages/files-dashboard.tsx";
 import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar.tsx";
-import AppSidebar from "./components/AppSidebar.tsx";
+import AppSidebar from "./components/app-sidebar.tsx";
 
 const router = createBrowserRouter([
   {

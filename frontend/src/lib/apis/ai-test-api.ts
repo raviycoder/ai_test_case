@@ -101,6 +101,7 @@ export interface TestSession {
     responseTokens: number;
     included: boolean;
   }>;
+  countFiles: number;
   processingTimeMs: number;
   createdAt: Date;
   completedAt?: Date;
@@ -333,6 +334,21 @@ export const generateTests = async (
       })
       .catch(reject);
   });
+};
+
+export const deleteTestFileApi = async (
+  sessionId: string,
+  filePath: string
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    // Encode the filePath to handle special characters and spaces
+    const encodedFilePath = encodeURIComponent(filePath);
+    const response = await aiTestApi.delete(`/${sessionId}/${encodedFilePath}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting test file:", error);
+    return { success: false, message: "Failed to delete test file" };
+  }
 };
 
 // Generate tests directly without requiring a pre-existing session

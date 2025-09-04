@@ -1,4 +1,6 @@
-import TestGenerationPanel from "@/components/TestGenerationPanel";
+import BreadcrumbComp from "@/components/breadcrumb-comp";
+import { DeleteAlert } from "@/components/delete-alert";
+import TestGenerationPanel from "@/components/test-generation-panel";
 import { CodeBlock } from "@/components/ui/code-block";
 import {
   ResizableHandle,
@@ -6,41 +8,57 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Skeleton } from "@/components/ui/skeleton";
-import useAITestGeneration from "@/hooks/useAITestGeneration";
-import { useFileContent } from "@/hooks/useGitRepo";
+import useAITestGeneration from "@/hooks/use-ai-test-generation";
+import { useFileContent } from "@/hooks/use-git-repo";
+import { IconInfoCircle } from "@tabler/icons-react";
 import { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 
 const FilesDashboard = () => {
   const [searchParams] = useSearchParams();
+  const params = useParams();
   const query = {
     repo: searchParams.get("repo") ?? "",
     branch: searchParams.get("_branch") ?? "",
     owner: searchParams.get("_owner") ?? "",
     path: searchParams.get("_file") ?? "",
   };
-
   const { content, isLoading } = useFileContent(
     query.owner,
     query.repo,
     query.path
   );
 
-  const { session, error } = useAITestGeneration({
-    onError: (error) => {
-      console.log("Error:", error);
-    },
-  });
+  const { session, error, testFilePaths, getTestFilePaths, deleteTestFile } =
+    useAITestGeneration({
+      onError: (error) => {
+        console.log("Error:", error);
+      },
+    });
 
   useEffect(() => {
-    console.log("data", session, error);
-  }, [session, error]);
-
+    if (params.sessionId && query.repo && query.owner) {
+      getTestFilePaths(params.sessionId, `${query.owner}%2F${query.repo}`);
+    }
+  }, [session, error, testFilePaths, query.repo, query.owner, getTestFilePaths, params.sessionId]);
 
   const decodedContent = content?.content ? atob(content.content) : "";
+  if (!query.repo || !query.owner || !query.path) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <IconInfoCircle className="w-12 h-12 text-gray-400 mb-4" />
+        <h2 className="text-2xl font-semibold mb-2">No Repository Selected</h2>
+        <p className="text-gray-500">
+          Please select a repository, owner, and file to view its content and
+          generate tests.
+        </p>
+      </div>
+    );
+  }
 
-  if (isLoading) return( 
-        <div className="max-w-full h-full">
+  if (isLoading)
+    return (
+      <div className="max-w-full h-full">
         <div className=" ">
           <ResizablePanelGroup
             direction="horizontal"
@@ -55,8 +73,8 @@ const FilesDashboard = () => {
             </ResizablePanel>
           </ResizablePanelGroup>
         </div>
-    </div>
-  );
+      </div>
+    );
   return (
     <div className="max-w-full h-full">
       <code>{error}</code>
@@ -68,7 +86,16 @@ const FilesDashboard = () => {
           >
             <ResizablePanel defaultSize={50} minSize={30}>
               <div className="flex items-center justify-between p-4 border-b">
-                <h1 className="text-lg font-semibold">Files Dashboard</h1>
+                <BreadcrumbComp filePath={query.path} />
+                { testFilePaths.includes(query.path) &&
+                <DeleteAlert
+                  title="Delete Test File"
+                  description={`Are you sure you want to delete the generated test file for ${query.path}? This action cannot be undone.`}
+                  onDelete={() => deleteTestFile(params.sessionId as string,query.path)}
+                  triggerText={"Delete Test File"}
+                  triggerVariant="destructive"
+                />
+                }
               </div>
               <div className=" h-full px-6 py-2">
                 <CodeBlock

@@ -119,6 +119,8 @@ export const useRealtimeTestGeneration = (options: UseRealtimeTestGenerationOpti
   const [generatedTest, setGeneratedTest] = useState<GeneratedTest | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [realtimeToken, setRealtimeToken] = useState<string | null>(null);
+  const [isComplete, setIsComplete] = useState(false);
+  const [generatingFilePaths, setGeneratingFilePaths] = useState<Set<string>>(new Set());
   
   const userStoppedRef = useRef(false);
   
@@ -128,18 +130,72 @@ export const useRealtimeTestGeneration = (options: UseRealtimeTestGenerationOpti
   const urlTestFilePath = searchParams.get("_file");
   const routeSessionId = params.sessionId;
 
-  // Store progress in localStorage
+  // Store progress in localStorage with file-specific keys
   const storeProgress = useCallback((data: {
     sessionId: string;
+    filePath?: string;
     progress: number;
     currentStep: string;
     currentMessage: string;
     isGenerating: boolean;
+    isComplete?: boolean;
+    generatingFiles?: string[];
   }) => {
     try {
-      localStorage.setItem("test-generation-progress", JSON.stringify(data));
+      // Store global session progress
+      localStorage.setItem("test-generation-progress", JSON.stringify({
+        sessionId: data.sessionId,
+        isGenerating: data.isGenerating,
+        isComplete: data.isComplete || false,
+        generatingFiles: data.generatingFiles || []
+      }));
+      
+      // Store file-specific progress if filePath is provided
+      if (data.filePath) {
+        const fileProgressKey = `test-generation-progress-${data.sessionId}-${encodeURIComponent(data.filePath)}`;
+        localStorage.setItem(fileProgressKey, JSON.stringify({
+          filePath: data.filePath,
+          progress: data.progress,
+          currentStep: data.currentStep,
+          currentMessage: data.currentMessage,
+          isGenerating: data.isGenerating,
+          isComplete: data.isComplete || false,
+          timestamp: Date.now()
+        }));
+      }
     } catch (error) {
       console.error("Failed to store progress:", error);
+    }
+  }, []);
+
+  // Helper function to get file-specific progress
+  const getFileProgress = useCallback((filePath: string, sessionId: string) => {
+    try {
+      const fileProgressKey = `test-generation-progress-${sessionId}-${encodeURIComponent(filePath)}`;
+      const stored = localStorage.getItem(fileProgressKey);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (error) {
+      console.error("Failed to get file progress:", error);
+    }
+    return null;
+  }, []);
+
+  // Helper function to check if a specific file is generating
+  const isFileGenerating = useCallback((filePath: string) => {
+    if (!sessionId) return false;
+    const fileProgress = getFileProgress(filePath, sessionId);
+    return fileProgress?.isGenerating && !fileProgress?.isComplete;
+  }, [sessionId, getFileProgress]);
+
+  // Helper function to clear file-specific progress
+  const clearFileProgress = useCallback((filePath: string, sessionId: string) => {
+    try {
+      const fileProgressKey = `test-generation-progress-${sessionId}-${encodeURIComponent(filePath)}`;
+      localStorage.removeItem(fileProgressKey);
+    } catch (error) {
+      console.error("Failed to clear file progress:", error);
     }
   }, []);
 
@@ -149,20 +205,41 @@ export const useRealtimeTestGeneration = (options: UseRealtimeTestGenerationOpti
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        if (parsed.sessionId && parsed.isGenerating) {
-          console.log("🔄 Restoring persisted progress:", parsed);
+        if (parsed.sessionId) {
+          console.log("🔄 Restoring global session progress:", parsed);
           setSessionId(parsed.sessionId);
-          setProgress(parsed.progress || 0);
-          setCurrentStep(parsed.currentStep || "");
-          setCurrentMessage(parsed.currentMessage || "");
-          setIsGenerating(true);
+          
+          // If we have a specific file path, restore file-specific progress
+          if (urlTestFilePath) {
+            const fileProgress = getFileProgress(urlTestFilePath, parsed.sessionId);
+            if (fileProgress) {
+              console.log("🔄 Restoring file-specific progress:", fileProgress);
+              setProgress(fileProgress.progress || 0);
+              setCurrentStep(fileProgress.currentStep || "");
+              setCurrentMessage(fileProgress.currentMessage || "");
+              setIsGenerating(fileProgress.isGenerating && !fileProgress.isComplete);
+              setIsComplete(fileProgress.isComplete || false);
+              
+              // Update generatingFilePaths set
+              if (fileProgress.isGenerating && !fileProgress.isComplete) {
+                setGeneratingFilePaths(prev => new Set([...prev, urlTestFilePath]));
+              }
+            }
+          } else {
+            // If no specific file, check if any generation is ongoing
+            setIsGenerating(parsed.isGenerating && !parsed.isComplete);
+            setIsComplete(parsed.isComplete || false);
+            if (parsed.generatingFiles) {
+              setGeneratingFilePaths(new Set(parsed.generatingFiles));
+            }
+          }
         }
       } catch (error) {
         console.error("Failed to restore persisted progress:", error);
         localStorage.removeItem("test-generation-progress");
       }
     }
-  }, []);
+  }, [urlTestFilePath, getFileProgress]);
 
   // Get realtime token when sessionId changes
   useEffect(() => {
@@ -225,7 +302,7 @@ export const useRealtimeTestGeneration = (options: UseRealtimeTestGenerationOpti
               description: testFileDto.data?.summary?.description || "Generated tests",
               testCount: testFileDto.data?.summary?.testCount || 0,
               coverageAreas: testFileDto.data?.summary?.coverageAreas || [],
-              framework: "unknown",
+              framework: testFileDto.data?.summary?.framework || "unknown",
               dependencies: testFileDto.data?.summary?.dependencies || []
             },
             validation: {
@@ -260,29 +337,58 @@ export const useRealtimeTestGeneration = (options: UseRealtimeTestGenerationOpti
       const update = latestData.data as ProgressUpdate;
       console.log("📊 Received progress update:", update);
 
-      // Update progress
-      if (update.progress !== undefined) {
-        setProgress(update.progress);
+      // Determine if this update is for the current file
+      const isCurrentFileUpdate = !urlTestFilePath || 
+        !update.currentFile || 
+        update.currentFile === urlTestFilePath;
+
+      // Update global progress only if it's for current file or no specific file
+      if (isCurrentFileUpdate) {
+        // Update progress
+        if (update.progress !== undefined) {
+          setProgress(update.progress);
+        }
+        
+        // Update step
+        if (update.step) {
+          setCurrentStep(update.step);
+        }
+        
+        // Update message
+        if (update.message) {
+          setCurrentMessage(update.message);
+        }
       }
-      
-      // Update step
-      if (update.step) {
-        setCurrentStep(update.step);
-      }
-      
-      // Update message
-      if (update.message) {
-        setCurrentMessage(update.message);
+
+      // Update generating files list
+      if (update.currentFile) {
+        setGeneratingFilePaths(prev => {
+          const newSet = new Set(prev);
+          if (update.type === "generation_completed" || update.type === "generation_failed") {
+            newSet.delete(update.currentFile!);
+          } else {
+            newSet.add(update.currentFile!);
+          }
+          return newSet;
+        });
       }
 
       // Store progress in localStorage
       if (sessionId) {
+        const currentGeneratingFiles = Array.from(generatingFilePaths);
+        if (update.currentFile && update.type !== "generation_completed" && update.type !== "generation_failed") {
+          currentGeneratingFiles.push(update.currentFile);
+        }
+
         storeProgress({
           sessionId,
+          filePath: update.currentFile || urlTestFilePath || undefined,
           progress: update.progress || progress,
           currentStep: update.step || currentStep,
           currentMessage: update.message || currentMessage,
-          isGenerating: true
+          isGenerating: update.type !== "generation_completed" && update.type !== "generation_failed",
+          isComplete: update.type === "generation_completed",
+          generatingFiles: [...new Set(currentGeneratingFiles)]
         });
       }
 
@@ -290,31 +396,63 @@ export const useRealtimeTestGeneration = (options: UseRealtimeTestGenerationOpti
       if (update.type === "generation_completed") {
         console.log("🎉 Generation completed");
         
-        setProgress(100);
-        setCurrentStep("completed");
-        setCurrentMessage("Test generation completed successfully!");
-        setIsGenerating(false);
+        // Only update UI if this is for the current file or no specific file
+        if (isCurrentFileUpdate) {
+          setProgress(100);
+          setCurrentStep("completed");
+          setCurrentMessage("Test generation completed successfully!");
+          setIsGenerating(false);
+          setIsComplete(true);
+        }
         
-        // Clear localStorage on completion
-        localStorage.removeItem("test-generation-progress");
+        // Clear file-specific progress on completion
+        if (update.currentFile && sessionId) {
+          clearFileProgress(update.currentFile, sessionId);
+        }
+
+        // Check if all files are completed
+        const remainingFiles = Array.from(generatingFilePaths).filter(file => file !== update.currentFile);
+        if (remainingFiles.length === 0) {
+          console.log("🎉 All files completed, clearing global progress");
+          localStorage.removeItem("test-generation-progress");
+          setIsGenerating(false);
+          setIsComplete(true);
+        }
 
         console.log("🔄 Fetching complete test data after completion...", sessionId, urlTestFilePath);
         
-        // Fetch complete test data from backend
-        if (update.type === "generation_completed" && sessionId) {
+        // Fetch complete test data from backend if it's for current file
+        if (isCurrentFileUpdate && sessionId) {
           console.log("✅ Conditions met, fetching complete test data...");
           fetchCompleteTestData();
         }
-
-        console.log("🤖🤖", generatedTest);
 
         options.onComplete?.(update);
         return;
       }
 
+      // Handle failure
+      if (update.type === "generation_failed") {
+        console.log("❌ Generation failed");
+        
+        if (isCurrentFileUpdate) {
+          setIsGenerating(false);
+          setIsComplete(true);
+          setError(update.message || "Generation failed");
+        }
+
+        // Clear file-specific progress on failure
+        if (update.currentFile && sessionId) {
+          clearFileProgress(update.currentFile, sessionId);
+        }
+
+        options.onError?.(update.message || "Generation failed");
+        return;
+      }
+
       options.onProgress?.(update);
     }
-  }, [latestData, sessionId, isGenerating, progress, currentStep, currentMessage, storeProgress, options, fetchCompleteTestData, generatedTest, urlTestFilePath]);
+  }, [latestData, sessionId, isGenerating, progress, currentStep, currentMessage, storeProgress, options, fetchCompleteTestData, generatedTest, urlTestFilePath, generatingFilePaths, clearFileProgress]);
 
   // Handle subscription errors
   useEffect(() => {
@@ -335,6 +473,7 @@ export const useRealtimeTestGeneration = (options: UseRealtimeTestGenerationOpti
       setCurrentMessage("Initiating background test generation...");
       setGeneratedTest(null);
       setError(null);
+      setIsComplete(false);
 
       console.log("🚀 Starting background test generation...", request);
 
@@ -345,6 +484,10 @@ export const useRealtimeTestGeneration = (options: UseRealtimeTestGenerationOpti
       // Set sessionId and trigger generation
       setSessionId(clientSessionId);
       
+      // Track which files are being generated
+      const filePaths = request.files.map(file => file.path);
+      setGeneratingFilePaths(new Set(filePaths));
+      
       const result = await triggerGenerationMutation.mutateAsync({
         ...request,
         sessionId: clientSessionId,
@@ -353,6 +496,7 @@ export const useRealtimeTestGeneration = (options: UseRealtimeTestGenerationOpti
       return result;
     } catch (error) {
       setIsGenerating(false);
+      setIsComplete(true);
       throw error;
     }
   }, [triggerGenerationMutation]);
@@ -362,9 +506,20 @@ export const useRealtimeTestGeneration = (options: UseRealtimeTestGenerationOpti
     console.log("🛑 User stopping generation");
     userStoppedRef.current = true;
     setIsGenerating(false);
+    setIsComplete(true);
     setCurrentMessage("Generation stopped by user");
+    
+    // Clear all file-specific progress
+    if (sessionId) {
+      generatingFilePaths.forEach(filePath => {
+        clearFileProgress(filePath, sessionId);
+      });
+    }
+    
+    // Clear global progress
     localStorage.removeItem("test-generation-progress");
-  }, []);
+    setGeneratingFilePaths(new Set());
+  }, [sessionId, generatingFilePaths, clearFileProgress]);
 
   // Reset state
   const reset = useCallback(() => {
@@ -376,10 +531,28 @@ export const useRealtimeTestGeneration = (options: UseRealtimeTestGenerationOpti
     setGeneratedTest(null);
     setError(null);
     setRealtimeToken(null);
+    setIsComplete(false);
+    setGeneratingFilePaths(new Set());
     userStoppedRef.current = false;
     
     // Clear localStorage
     localStorage.removeItem("test-generation-progress");
+    
+    // Clear all file-specific progress (if we have sessionId)
+    const stored = localStorage.getItem("test-generation-progress");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed.sessionId && parsed.generatingFiles) {
+          parsed.generatingFiles.forEach((filePath: string) => {
+            const fileProgressKey = `test-generation-progress-${parsed.sessionId}-${encodeURIComponent(filePath)}`;
+            localStorage.removeItem(fileProgressKey);
+          });
+        }
+      } catch (error) {
+        console.error("Failed to clear file-specific progress:", error);
+      }
+    }
   }, []);
 
   return {
@@ -391,6 +564,8 @@ export const useRealtimeTestGeneration = (options: UseRealtimeTestGenerationOpti
     currentMessage,
     sessionId,
     generatedTest,
+    isComplete,
+    generatingFilePaths,
     
     // URL Parameters
     urlTestFilePath,
@@ -399,7 +574,13 @@ export const useRealtimeTestGeneration = (options: UseRealtimeTestGenerationOpti
     // Actions
     startBackgroundGeneration,
     stopGeneration,
+    setIsGenerating,
     reset,
+    
+    // File-specific utilities
+    isFileGenerating,
+    getFileProgress,
+    clearFileProgress,
     
     // AI Test Generation integration
   };

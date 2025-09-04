@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useGitRepo, useRepoFiles, useRepoTree } from '@/hooks/useGitRepo';
+import { useGitRepo, useRepoFiles, useRepoTree } from '@/hooks/use-git-repo';
 import {
   Dialog,
   DialogContent,

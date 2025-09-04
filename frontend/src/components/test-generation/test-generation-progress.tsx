@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Progress } from "../ui/progress";
-import { Clock, FileText } from "lucide-react";
+import { AILoader } from "../ui/ai-loader";
 
 interface TestGenerationProgressProps {
   isGenerating: boolean;
@@ -23,6 +22,62 @@ interface ProgressData {
 
 const PROGRESS_STORAGE_KEY = "test-generation-progress";
 
+// Transform step names to shorter, two-word versions
+const formatStep = (step: string): string => {
+  const stepMap: Record<string, string> = {
+    "initializing": "Starting\nUp",
+    "analyzing": "Reading\nCode",
+    "analyzing_files": "Reading\nFiles",
+    "planning_tests": "Planning\nTests",
+    "generating_tests": "Generating\nCode",
+    "generating": "Generating\nCode",
+    "validating": "Checking\nCode",
+    "validating_tests": "Checking\nTests",
+    "saving": "Saving\nFile",
+    "saving_files": "Saving\nFiles",
+    "compressing": "Compressing\nData",
+    "finalizing": "Finishing\nUp",
+    "completed": "Test\nComplete",
+    "error": "Error\nOccurred",
+    "cancelled": "Task\nCancelled",
+    "preparing": "Preparing\nFiles",
+    "processing": "Processing\nData",
+    "reviewing": "Reviewing\nCode",
+    "optimizing": "Optimizing\nTests"
+  };
+
+  // Try exact match first
+  if (stepMap[step.toLowerCase()]) {
+    return stepMap[step.toLowerCase()];
+  }
+
+  // Try partial matches for complex step names
+  const lowerStep = step.toLowerCase();
+  if (lowerStep.includes("generat")) return "Generating\nCode";
+  if (lowerStep.includes("analyz") || lowerStep.includes("read")) return "Reading\nCode";
+  if (lowerStep.includes("valid") || lowerStep.includes("check")) return "Checking\nCode";
+  if (lowerStep.includes("sav")) return "Saving\nFile";
+  if (lowerStep.includes("plan")) return "Planning\nTests";
+  if (lowerStep.includes("final") || lowerStep.includes("finish")) return "Finishing\nUp";
+  if (lowerStep.includes("complet")) return "Test\nComplete";
+  if (lowerStep.includes("error")) return "Error\nOccurred";
+  if (lowerStep.includes("prepar")) return "Preparing\nFiles";
+  if (lowerStep.includes("process")) return "Processing\nData";
+
+  // Fallback: split long step names into two words
+  const words = step.split(/[\s_-]+/).filter(word => word.length > 0);
+  if (words.length >= 2) {
+    return `${words[0]}\n${words[1]}`;
+  } else if (words.length === 1 && words[0].length > 6) {
+    // Split single long word in half
+    const word = words[0];
+    const mid = Math.ceil(word.length / 2);
+    return `${word.slice(0, mid)}\n${word.slice(mid)}`;
+  }
+
+  return step || "Working\nOn It";
+};
+
 export const TestGenerationProgress: React.FC<TestGenerationProgressProps> = ({
   isGenerating,
   progress,
@@ -32,7 +87,6 @@ export const TestGenerationProgress: React.FC<TestGenerationProgressProps> = ({
   filePath,
 }) => {
   const [persistedProgress, setPersistedProgress] = useState<ProgressData | null>(null);
-  const [timeElapsed, setTimeElapsed] = useState<string>("");
 
   // Load persisted progress on component mount
   useEffect(() => {
@@ -85,88 +139,19 @@ export const TestGenerationProgress: React.FC<TestGenerationProgressProps> = ({
     }
   }, [isGenerating, progress, sessionId]);
 
-  // Update elapsed time
-  useEffect(() => {
-    if (persistedProgress?.startedAt) {
-      const updateTime = () => {
-        const startTime = new Date(persistedProgress.startedAt).getTime();
-        const now = Date.now();
-        const elapsed = Math.floor((now - startTime) / 1000);
-        
-        const minutes = Math.floor(elapsed / 60);
-        const seconds = elapsed % 60;
-        
-        if (minutes > 0) {
-          setTimeElapsed(`${minutes}m ${seconds}s`);
-        } else {
-          setTimeElapsed(`${seconds}s`);
-        }
-      };
-
-      updateTime();
-      const interval = setInterval(updateTime, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [persistedProgress?.startedAt]);
-
   // Determine what to show - current or persisted data
   const showProgress = isGenerating || persistedProgress;
-  const displayProgress = isGenerating ? progress : (persistedProgress?.progress || 0);
   const displayStep = isGenerating ? currentStep : (persistedProgress?.currentStep || "");
-  const displayMessage = isGenerating ? currentMessage : (persistedProgress?.currentMessage || "");
-  const displayFilePath = filePath || persistedProgress?.filePath;
+
+  // Format the step name to be shorter and more readable
+  const formattedStep = formatStep(displayStep);
 
   if (!showProgress) return null;
 
-  const isCompleted = displayProgress >= 100;
-  const isPersisted = !isGenerating && !!persistedProgress;
-
   return (
-    <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">
-            {isCompleted ? "Generation Complete!" : "Generation Progress"}
-          </span>
-          {isPersisted && (
-            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">
-              Restored
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          {timeElapsed && (
-            <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              <span>{timeElapsed}</span>
-            </div>
-          )}
-          <span>{displayProgress}%</span>
-        </div>
-      </div>
-      
-      <Progress 
-        value={displayProgress} 
-        className={`w-full ${isCompleted ? 'bg-green-100' : ''}`}
-      />
-      
-      <div className="space-y-1">
-        <div className="text-sm text-gray-600">
-          <span className="font-medium">{displayStep}:</span> {displayMessage}
-        </div>
-        
-        {displayFilePath && (
-          <div className="flex items-center gap-1 text-xs text-gray-500">
-            <FileText className="h-3 w-3" />
-            <span>{displayFilePath}</span>
-          </div>
-        )}
-        
-        {isPersisted && (
-          <div className="text-xs text-orange-600 mt-2">
-            ⚡ Progress restored from previous session. The generation may still be running in the background.
-          </div>
-        )}
+    <div className="flex h-[90vh] justify-center items-center p-8">
+      <div className="text-center space-y-4">
+        <AILoader size={180} text={formattedStep} />
       </div>
     </div>
   );
