@@ -9,6 +9,7 @@ export interface ITestSession extends Document {
 	defaultPath?: string;
 	sessionId: string;
 	status: TestSessionStatus;
+	countFiles?: number;
 	framework?: string; // overall framework selected for session, e.g. jest
 	processingTimeMs?: number;
 	createdAt: Date; // provided by timestamps
@@ -23,6 +24,7 @@ const TestSessionSchema = new Schema<ITestSession>(
 		repoBranch: { type: String, trim: true },
 		defaultPath: {type: String, default: ""},
 		sessionId: { type: String, required: true },
+		countFiles: { type: Number, default: 0, min: 0 },
 		status: {
 			type: String,
 			enum: ["pending", "processing", "completed", "failed"],
@@ -30,7 +32,7 @@ const TestSessionSchema = new Schema<ITestSession>(
 		},
 		framework: { type: String, trim: true },
 		processingTimeMs: { type: Number, default: 0, min: 0 },
-		completedAt: { type: Date, default: null },
+		completedAt: { type: Date, default: null }
 	},
 	{
 		collection: "test_sessions",

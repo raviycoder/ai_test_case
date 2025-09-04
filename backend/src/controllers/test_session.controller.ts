@@ -1,8 +1,8 @@
-import TestSession from "../models/testSession.model";
+import TestSession from "../models/test_session.model";
 import { Request, Response } from "express";
 import { getAuth } from "./auth.controller";
 import { fromNodeHeaders } from "better-auth/node";
-import TestFile from "../models/testFile.model";
+import TestFile from "../models/test_file.model";
 
 export const createTestSession = async (req: Request, res: Response) => {
   try {
@@ -181,7 +181,7 @@ export const getUserSessions = async (req: Request, res: Response) => {
 
         const sessions = await TestSession.find({ userId: sessionResp.user.id })
             .sort({ createdAt: -1 }) // Most recent first
-            .select('sessionId repositoryId repoBranch status framework processingTimeMs createdAt defaultPath completedAt');
+            .select('sessionId repositoryId repoBranch status framework processingTimeMs createdAt defaultPath completedAt countFiles'); // Select only necessary fields
 
         return res.status(200).json({
             success: true,

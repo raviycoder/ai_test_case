@@ -1,12 +1,13 @@
 import { Inngest } from "inngest";
 import { realtimeMiddleware, channel, topic } from "@inngest/realtime";
 import { Types } from "mongoose";
-import TestSession from "../../models/testSession.model";
-import TestFile from "../../models/testFile.model";
+import TestSession from "../../models/test_session.model";
+import TestFile from "../../models/test_file.model";
 import { compressTest } from "../../services/compress";
 
 // Import existing functions from AI test controller
 import { 
+  createTestFile,
   generateTestForFile
 } from "../../controllers/ai_test.controller";
 
@@ -239,23 +240,18 @@ const generateAITests = inngest.createFunction(
     }
 
     // Step 3: Save Test Files to Database
-    const savedTestFiles = await step.run("save-test-files", async () => {
+    await step.run("save-test-files", async () => {
       console.log(`💾 Saving ${generatedTests.length} test files to database`, generateAITests);
 
     const testFilePromises = generatedTests.map(async (test) => {
-        const testFile = new TestFile({
+        const testFile = await createTestFile({
           sessionId: session._id,
           userId: new Types.ObjectId(userId),
           originalFilePath: test.filePath,
           repositoryId: repositoryId,
           testFilePath: test.filePath.replace(/\.(js|ts|jsx|tsx)$/, `.test.$1`),
-          suggestedTestFileName: test.filePath
-            .split("/")
-            .pop()
-            ?.replace(/\.(js|ts|jsx|tsx)$/, `.test.$1`) || "test.js",
-      // Store compressed code to match model expectations
-      compressionAlgo: "gzip",
-      testCode: compressTest(test.testCode, "gzip"),
+          testCode: compressTest(test.testCode, "gzip"),
+          compressionAlgo: "gzip" as const,
           summary: test.summary,
           validation: test.validation,
           metadata: test.metadata,
@@ -263,7 +259,6 @@ const generateAITests = inngest.createFunction(
           isActive: true,
         });
 
-        await testFile.save();
         return testFile;
       });
 

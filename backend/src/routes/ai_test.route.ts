@@ -7,7 +7,8 @@ import {
   getTestFilesByRepository,
   updateTestFileStatus,
   getTestFileByPath,
-  getTestFilePaths
+  getTestFilePaths,
+  deleteTestFile
 } from '../controllers/ai_test.controller';
 import { createTestSession, getUserSessions } from '../controllers/test_session.controller';
 
@@ -43,6 +44,8 @@ router.get('/repositories/:repositoryId/:sessionId', getTestFilePaths);
 
 // Update test file status
 router.patch('/test-files/:testFileId', updateTestFileStatus);
+
+router.delete('/:sessionId/:filePath', deleteTestFile);
 
 
 export default router;

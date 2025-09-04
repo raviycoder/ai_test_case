@@ -2,10 +2,11 @@ import { GoogleGenAI } from "@google/genai";
 import type { Request, Response } from "express";
 import { getAuth } from "./auth.controller";
 import { fromNodeHeaders } from "better-auth/node";
-import TestSession from "../models/testSession.model";
-import TestFile from "../models/testFile.model";
+import TestSession from "../models/test_session.model";
+import TestFile, { ITestFile } from "../models/test_file.model";
 import { compressTest } from "../services/compress";
 import { Types } from "mongoose";
+import { number } from "better-auth/*";
 
 // Utility function to safely decode file paths
 const safeDecodeFilePath = (path: string): string => {
@@ -1015,6 +1016,163 @@ export const generateTestsDirect = async (req: Request, res: Response) => {
   }
 };
 
+//   createTestFile({
+//     sessionId: session._id,
+//     userId: new Types.ObjectId(userId),
+//     originalFilePath: test.filePath,
+//     repositoryId: repositoryId,
+//     testFilePath: test.filePath.replace(/\.(js|ts|jsx|tsx)$/, `.test.$1`),
+//     suggestedTestFileName: test.filePath
+//       .split("/")
+//       .pop()
+//       ?.replace(/\.(js|ts|jsx|tsx)$/, `.test.$1`) || "test.js",
+// // Store compressed code to match model expectations
+// compressionAlgo: "gzip",
+// testCode: compressTest(test.testCode, "gzip"),
+//     summary: test.summary,
+//     validation: test.validation,
+//     metadata: test.metadata,
+//     status: test.validation.isValid ? "completed" : "failed",
+//     isActive: true,
+//   });
+// Interface for creating test files (without Document properties)
+interface CreateTestFileParams {
+  sessionId: Types.ObjectId;
+  userId: Types.ObjectId;
+  originalFilePath: string;
+  repositoryId: string;
+  testFilePath?: string;
+  testCode: Buffer;
+  compressionAlgo?: "br" | "gzip";
+  summary: any; // Using any for now to match the existing usage
+  validation: any;
+  metadata: any;
+  status: string;
+  isActive?: boolean;
+}
+
+export const createTestFile = async ({
+  sessionId,
+  userId,
+  originalFilePath,
+  repositoryId,
+  testFilePath,
+  testCode,
+  compressionAlgo = "gzip",
+  summary,
+  validation,
+  metadata,
+  status,
+  isActive = true,
+}: CreateTestFileParams) => {
+  try {
+    if (
+      !sessionId ||
+      !userId ||
+      !originalFilePath ||
+      !repositoryId ||
+      !testCode
+    ) {
+      throw new Error("Missing required fields to create TestFile");
+    }
+    const testFile = new TestFile({
+      sessionId: sessionId,
+      userId: userId,
+      repositoryId: repositoryId,
+      originalFilePath: originalFilePath,
+      testFilePath: testFilePath,
+      compressionAlgo: compressionAlgo,
+      testCode: testCode,
+      summary: summary,
+      validation: validation,
+      metadata: metadata,
+      status: status,
+      isActive: isActive,
+    });
+
+    const countTestFiles = await TestFile.countDocuments({ sessionId: sessionId });
+
+    const updateSession = await TestSession.findOneAndUpdate(
+      { _id: sessionId },
+      {
+        $set: {
+          status: status === "completed" ? "completed" : status,
+          defaultPath: originalFilePath,
+          countFiles: countTestFiles + 1,
+        },
+      }
+    );
+
+    await testFile.save();
+    await updateSession?.save();
+    return testFile;
+  } catch (error) {
+    console.error("Error creating test file:", error);
+    throw error;
+  }
+};
+
+export const deleteTestFile = async (req: Request, res: Response) => {
+  try {
+    const auth = await getAuth();
+    const sessionResp = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    });
+
+    if (!sessionResp?.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    const { sessionId, filePath } = req.params;
+
+    // Decode the file path to handle special characters
+    const decodedFilePath = safeDecodeFilePath(filePath);
+
+    // Find the session first
+    const session = await TestSession.findOne({ sessionId });
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        message: "Test session not found",
+      });
+    }
+    // Find the test file by its original path
+    const testFile = await TestFile.findOneAndDelete({
+      originalFilePath: decodedFilePath,
+      sessionId: session._id,
+      userId: sessionResp.user.id,
+      isActive: true,
+    });
+    if (!testFile) {
+      return res.status(404).json({
+        success: false,
+        message: "Test file not found",
+      });
+    }
+
+    await testFile.save();
+
+    await TestSession.findOneAndUpdate(
+      { sessionId: sessionId },
+      { $inc: { countFiles: -1 } }
+    );
+    return res.json({
+      success: true,
+      message: "Test file deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting test file:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete test file",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
 // Get test files for a session
 export const getTestFiles = async (req: Request, res: Response) => {
   try {
@@ -1387,4 +1545,10 @@ export const generateTestForFile = async (
 };
 
 // Export utility functions for reuse
-export { createTestPrompt, createCodeSummaryPrompt, validateTestCode, safeDecodeFilePath, geminiAI };
+export {
+  createTestPrompt,
+  createCodeSummaryPrompt,
+  validateTestCode,
+  safeDecodeFilePath,
+  geminiAI,
+};
