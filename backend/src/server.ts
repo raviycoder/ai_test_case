@@ -8,7 +8,11 @@ import rateLimit from 'express-rate-limit';
 import { config } from './config';
 import { connectToDatabase } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
-import routes from './routes';
+import userRoutes from './routes/user.route';
+import githubRoutes from './routes/github.route';
+import aiTestRoutes from './routes/ai_test.route';
+import inngestRoutes from './routes/inngest.route';
+import realtimeRoutes from './routes/realtime.route';
 import { getAuth } from './controllers/auth.controller';
 import { serve } from "inngest/express";
 import { inngest, functions } from "./services/inngest/index";
@@ -71,14 +75,15 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Inngest serve endpoint - specific path to avoid conflicts with custom inngest routes
-app.use("/api/inngest", serve({ client: inngest, functions }));
+// API routes - mount BEFORE Inngest to ensure proper routing
+app.use('/api/users', userRoutes);
+app.use('/api/github', githubRoutes);
+app.use('/api/ai-tests', aiTestRoutes);
+app.use('/api/inngest', inngestRoutes);
+app.use('/api/realtime', realtimeRoutes);
 
-// API routes (includes custom /api/inngest routes)
-app.use('/api', (req, res, next) => {
-  console.log(`API Route accessed: ${req.method} ${req.originalUrl}`);
-  next();
-}, routes);
+// Inngest serve endpoint - mount AFTER API routes with specific path
+app.use("/api/inngest", serve({ client: inngest, functions }));
 
 // redirect to frontend url
 app.get('/', (req, res) => {
@@ -100,7 +105,6 @@ app.use(errorHandler);
 if (process.env.VERCEL) {
   connectToDatabase().catch((error) => {
     console.error('❌ MongoDB connection failed (serverless):', error);
-    // Don't exit on DB connection failure in serverless - let routes handle it
   });
 } else {
   // Local / non-Vercel: connect DB then start server
