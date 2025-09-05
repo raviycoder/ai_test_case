@@ -71,16 +71,19 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API routes
-app.use('/api', routes);
+// Inngest serve endpoint - specific path to avoid conflicts with custom inngest routes
+app.use("/api/inngest", serve({ client: inngest, functions }));
+
+// API routes (includes custom /api/inngest routes)
+app.use('/api', (req, res, next) => {
+  console.log(`API Route accessed: ${req.method} ${req.originalUrl}`);
+  next();
+}, routes);
 
 // redirect to frontend url
 app.get('/', (req, res) => {
   res.redirect(config.FRONTEND_URL);
 });
-
-// Inngest serve endpoint - keep after API routes to avoid intercepting custom /api/inngest/* routes
-app.use("/api/inngest", serve({ client: inngest, functions }));
 
 // 404 handler for undefined routes
 app.use('*', (req, res) => {
@@ -97,6 +100,7 @@ app.use(errorHandler);
 if (process.env.VERCEL) {
   connectToDatabase().catch((error) => {
     console.error('❌ MongoDB connection failed (serverless):', error);
+    // Don't exit on DB connection failure in serverless - let routes handle it
   });
 } else {
   // Local / non-Vercel: connect DB then start server
