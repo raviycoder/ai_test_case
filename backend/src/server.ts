@@ -61,6 +61,11 @@ app.all("/api/auth/*", async (req, res, next) => {
   }
 });
 
+app.use('/api/users', userRoutes);
+app.use('/api/github', githubRoutes);
+app.use('/api/ai-tests', aiTestRoutes);
+app.use('/api/realtime', realtimeRoutes);
+
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -76,11 +81,6 @@ app.get('/health', (req, res) => {
 });
 
 // API routes - mount BEFORE Inngest to ensure proper routing
-app.use('/api/users', userRoutes);
-app.use('/api/github', githubRoutes);
-app.use('/api/ai-tests', aiTestRoutes);
-app.use('/api/inngest', inngestRoutes);
-app.use('/api/realtime', realtimeRoutes);
 
 // Inngest serve endpoint - mount AFTER API routes with specific path
 app.use("/api/inngest", serve({ client: inngest, functions }));
