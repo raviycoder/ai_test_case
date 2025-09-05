@@ -20,13 +20,6 @@
   "env": {
     "NODE_ENV": "production"
   },
-  "functions": {
-    "api/*.ts": {
-      "runtime": "nodejs18.x",
-      "memory": 1024,
-      "maxDuration": 30
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",
