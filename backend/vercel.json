@@ -2,9 +2,9 @@
   "version": 2,
   "name": "ai-test-gen-backend",
   "builds": [
-    { "src": "src/server.js", "use": "@vercel/node" }
+    { "src": "src/server.ts", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "src/server.js" }
+    { "src": "/(.*)", "dest": "src/server.ts" }
   ]
 }
