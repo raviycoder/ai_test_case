@@ -93,21 +93,32 @@ app.use('*', (req, res) => {
 // Error handling middleware
 app.use(errorHandler);
 
-// Bootstrap: connect DB then start server
-(async () => {
-  try {
-    await connectToDatabase();
-    app.listen(config.PORT, () => {
-      if (process.env.NODE_ENV !== 'production') {
-        {console.log(`🚀 Server running on port ${config.PORT}`);
-        console.log(`📱 Environment: ${config.NODE_ENV}`);
-        console.log(`🔗 API available at: http://localhost:${config.PORT}/api`);
-        console.log(`❤️  Health check: http://localhost:${config.PORT}/health`);
-      }
-      }
-    });
-  } catch (error) {
-    console.error('❌ Failed to start server:', error);
-    process.exit(1);
-  }
-})();
+// On Vercel (serverless), do not start a listener; connect DB once per cold start
+if (process.env.VERCEL) {
+  connectToDatabase().catch((error) => {
+    console.error('❌ MongoDB connection failed (serverless):', error);
+  });
+} else {
+  // Local / non-Vercel: connect DB then start server
+  (async () => {
+    try {
+      await connectToDatabase();
+      app.listen(config.PORT, () => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`🚀 Server running on port ${config.PORT}`);
+          console.log(`📱 Environment: ${config.NODE_ENV}`);
+          console.log(`🔗 API available at: http://localhost:${config.PORT}/api`);
+          console.log(`❤️  Health check: http://localhost:${config.PORT}/health`);
+        }
+      });
+    } catch (error) {
+      console.error('❌ Failed to start server:', error);
+      process.exit(1);
+    }
+  })();
+}
+
+// Export Vercel-compatible handler
+export default function handler(req: any, res: any) {
+  return (app as any)(req, res);
+}
