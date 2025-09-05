@@ -2,22 +2,6 @@
   "version": 2,
   "name": "ai-test-gen-backend",
   "builds": [
-    {
-      "src": "api/*.ts",
-      "use": "@vercel/node"
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/api/index"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  { "src": "api/*.ts", "use": "@vercel/node" }
+  ]
 }
