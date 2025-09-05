@@ -48,7 +48,7 @@ export const getGithubRepos = async (req: Request, res: Response) => {
             headers: fromNodeHeaders(req.headers),
         });
 
-        console.log("GitHub access token response:", tokenResp);
+        console.log("🤗🤗🤗 Token response:", tokenResp);
 
         if (tokenResp.error || !tokenResp?.accessToken) {
             return res.status(401).json({ success: false, message: "No provider access token" });
@@ -137,8 +137,6 @@ export const getRepoFiles = async (req: Request, res: Response) => {
             body: { providerId: "github" },
             headers: fromNodeHeaders(req.headers),
         });
-
-        console.log("GitHub access token response:", tokenResp);
 
         if (tokenResp.error || !tokenResp?.accessToken) {
             return res.status(401).json({ success: false, message: "No provider access token" });

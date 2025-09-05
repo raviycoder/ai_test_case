@@ -19,7 +19,6 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const user = await User.findById(id);
   
-  console.log('Fetching user with ID:', user);
   if (!user) {
     throw createError('User not found', 404);
   }

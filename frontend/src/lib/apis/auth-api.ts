@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { createAuthClient } from 'better-auth/client';
 
 export const authClient = createAuthClient({
@@ -42,4 +43,18 @@ export const authAPI = {
     return authClient.accountInfo({ accountId: id });
   },
   // Link Status
+
+  isGitHubLinked: async (userId: string) => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/github/is-linked/${userId}`);
+      if (!response.data.success) {
+        throw new Error("Failed to check GitHub link status");
+      }
+      return response.data;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: Error | any) {
+      console.error("Error checking GitHub link status:", error);
+      return { success: false, message: error.message };
+    }
+  }
 };

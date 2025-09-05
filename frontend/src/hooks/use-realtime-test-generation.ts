@@ -573,6 +573,7 @@ export const useRealtimeTestGeneration = (options: UseRealtimeTestGenerationOpti
     
     // Actions
     startBackgroundGeneration,
+    setGeneratedTest,
     stopGeneration,
     setIsGenerating,
     reset,

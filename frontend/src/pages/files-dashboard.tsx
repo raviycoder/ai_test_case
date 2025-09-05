@@ -11,11 +11,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import useAITestGeneration from "@/hooks/use-ai-test-generation";
 import { useFileContent } from "@/hooks/use-git-repo";
 import { IconInfoCircle } from "@tabler/icons-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 
 const FilesDashboard = () => {
   const [searchParams] = useSearchParams();
+  const [deletedFiles, setDeletedFiles] = useState<string>("");
   const params = useParams();
   const query = {
     repo: searchParams.get("repo") ?? "",
@@ -40,7 +41,15 @@ const FilesDashboard = () => {
     if (params.sessionId && query.repo && query.owner) {
       getTestFilePaths(params.sessionId, `${query.owner}%2F${query.repo}`);
     }
-  }, [session, error, testFilePaths, query.repo, query.owner, getTestFilePaths, params.sessionId]);
+  }, [
+    session,
+    error,
+    testFilePaths,
+    query.repo,
+    query.owner,
+    getTestFilePaths,
+    params.sessionId,
+  ]);
 
   const decodedContent = content?.content ? atob(content.content) : "";
   if (!query.repo || !query.owner || !query.path) {
@@ -87,15 +96,18 @@ const FilesDashboard = () => {
             <ResizablePanel defaultSize={50} minSize={30}>
               <div className="flex items-center justify-between p-4 border-b">
                 <BreadcrumbComp filePath={query.path} />
-                { testFilePaths.includes(query.path) &&
-                <DeleteAlert
-                  title="Delete Test File"
-                  description={`Are you sure you want to delete the generated test file for ${query.path}? This action cannot be undone.`}
-                  onDelete={() => deleteTestFile(params.sessionId as string,query.path)}
-                  triggerText={"Delete Test File"}
-                  triggerVariant="destructive"
-                />
-                }
+                {deletedFiles !== query.path && testFilePaths.includes(query.path) && (
+                  <DeleteAlert
+                    title="Delete Test File"
+                    description={`Are you sure you want to delete the generated test file for ${query.path}? This action cannot be undone.`}
+                    onDelete={() => {
+                      deleteTestFile(params.sessionId as string, query.path);
+                      setDeletedFiles(query.path);
+                    }}
+                    triggerText={"Delete Test File"}
+                    triggerVariant="destructive"
+                  />
+                )}
               </div>
               <div className=" h-full px-6 py-2">
                 <CodeBlock
@@ -109,12 +121,16 @@ const FilesDashboard = () => {
             <ResizablePanel defaultSize={50} minSize={30}>
               <div className="flex h-full items-start justify-center p-6">
                 {" "}
-                <TestGenerationPanel
-                  selectedFiles={[query.path]}
-                  repositoryId={`${query.owner}/${query.repo}`}
-                  owner={query.owner}
-                  repo={query.repo}
-                />
+                {deletedFiles !== query.path ? (
+                  <TestGenerationPanel
+                    selectedFiles={[query.path]}
+                    repositoryId={`${query.owner}/${query.repo}`}
+                    owner={query.owner}
+                    repo={query.repo}
+                  />
+                ) : (
+                  <p>This file is deleted</p>
+                )}
               </div>
             </ResizablePanel>
           </ResizablePanelGroup>

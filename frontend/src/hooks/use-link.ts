@@ -11,7 +11,6 @@ export const useLink = () => {
         queryClient.invalidateQueries({ queryKey: ['auth', 'session', 'accessToken'] });
         },
     });
-    
     return {
         requestScopes: requestScopes.mutate,
         isRequestingScopes: requestScopes.isPending,

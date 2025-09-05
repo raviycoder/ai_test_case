@@ -593,4 +593,17 @@ export const getBackgroundTestStatus = async (sessionId: string) => {
   }
 };
 
+export const getRealtimeUpdates = async (sessionId: string) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/realtime/updates/${sessionId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting realtime updates:", error);
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || "Failed to get realtime updates");
+    }
+    throw error;
+  }
+};
+
 export default aiTestApi;

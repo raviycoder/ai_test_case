@@ -6,8 +6,6 @@ export interface IUser extends Document {
   // Newly added fields
   emailVerified: boolean;
   image?: string;
-  accountLinked: boolean; // intentionally spelled as requested
-  // Existing field used by controllers
   isActive: boolean;
   // Timestamps
   createdAt: Date;
@@ -38,10 +36,6 @@ const userSchema = new Schema<IUser>({
   image: {
     type: String,
     trim: true
-  },
-  accountLinked: {
-    type: Boolean,
-    default: false
   },
   // App lifecycle flag (kept for existing usage)
   isActive: {

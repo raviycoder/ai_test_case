@@ -33,6 +33,7 @@ interface UseAITestGenerationReturn {
   generatedTests: GeneratedTest[];
   progress: number;
   currentStep: string;
+  setTestFile: (file: TestFileDto | null) => void;
 
   // Actions
   createSession: (
@@ -324,6 +325,7 @@ export const useAITestGeneration = (
     testFile,
     testFilePaths,
     isGenerating,
+    setTestFile,
     isLoading,
     error,
     generatedTests,

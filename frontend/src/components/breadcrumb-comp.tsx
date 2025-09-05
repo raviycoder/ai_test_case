@@ -1,4 +1,4 @@
-import { ComponentIcon, HomeIcon } from "lucide-react"
+import { HomeIcon } from "lucide-react"
 
 import {
   Breadcrumb,

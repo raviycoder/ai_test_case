@@ -1,5 +1,5 @@
 export { Header } from './header';
-export { LeftPanel } from './left-hand';
+export { LeftPanel } from './left-panel';
 export { SessionsPanel } from './session-panel';
 export { UserProfileCard } from './user-profile-card';
 export { QuickActionsCard } from './quick-action-card';

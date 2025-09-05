@@ -1,15 +1,8 @@
 import React from "react";
-import { CheckCircle, AlertTriangle } from "lucide-react";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../ui/tabs";
-import {
-  FileText,
-  Code,
-} from "lucide-react";
+import { CheckCircle, AlertTriangle, Download } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { FileText, Code } from "lucide-react";
+import { Button } from "../ui/button";
 import { CodeBlock } from "../ui/code-block";
 import { TestOverviewCard } from "./test-overview-card";
 import { TestValidationCard } from "./test-validation-card";
@@ -31,15 +24,51 @@ export const TestResultsTabs: React.FC<TestResultsTabsProps> = ({
   testFile,
 }) => {
   const hasTests = generatedTests.length > 0 || specificTestFile;
-  
+
   if (!hasTests) return null;
+
+  // Download function for test files
+  const downloadTestFile = (code: string, filename: string) => {
+    const blob = new Blob([code], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Download all test files as a zip (simplified version)
+  // const downloadAllTests = () => {
+  //   if (specificTestFile) {
+  //     downloadTestFile(
+  //       specificTestFile.testCode,
+  //       specificTestFile.suggestedTestFileName
+  //     );
+  //   } else if (testFile) {
+  //     downloadTestFile(testFile.testCode, testFile.suggestedTestFileName);
+  //   } else {
+  //     generatedTests.forEach((test, index) => {
+  //       const filename =
+  //         test.filePath.split("/").pop() || `test-${index + 1}.js`;
+  //       setTimeout(
+  //         () => downloadTestFile(test.testCode, filename),
+  //         index * 100
+  //       );
+  //     });
+  //   }
+  // };
 
   // Filter tests with issues for the issues tab
   const testsWithIssues = generatedTests.filter(
     (test) =>
       !test.validation.isValid ||
-      (test.validation.syntax.errors && test.validation.syntax.errors.length > 0) ||
-      (test.validation.logic.warnings && test.validation.logic.warnings.length > 0)
+      (test.validation.syntax.errors &&
+        test.validation.syntax.errors.length > 0) ||
+      (test.validation.logic.warnings &&
+        test.validation.logic.warnings.length > 0)
   );
 
   return (
@@ -75,25 +104,77 @@ export const TestResultsTabs: React.FC<TestResultsTabsProps> = ({
 
       <TabsContent value="code" className="space-y-4 mt-4">
         {specificTestFile ? (
-          <CodeBlock
-            code={specificTestFile.testCode}
-            filename={specificTestFile.suggestedTestFileName}
-            language={specificTestFile.suggestedTestFileName.split(".").pop() || "js"}
-          />
+          <div className="relative">
+            <div className="absolute top-4 right-10 z-10">
+              <Button
+                onClick={() =>
+                  downloadTestFile(
+                    specificTestFile.testCode,
+                    specificTestFile.suggestedTestFileName
+                  )
+                }
+                size="sm"
+                variant="outline"
+                className="bg-transparent text-gray-400 dark:text-gray-50 border-0 hover:bg-transparent hover:text-gray-50"
+              >
+                <Download className="h-3 w-3" />
+              </Button>
+            </div>
+            <CodeBlock
+              code={specificTestFile.testCode}
+              filename={specificTestFile.suggestedTestFileName}
+              language={
+                specificTestFile.suggestedTestFileName.split(".").pop() || "js"
+              }
+            />
+          </div>
         ) : testFile ? (
-          <CodeBlock
-            code={testFile.testCode}
-            filename={testFile.suggestedTestFileName}
-            language={testFile.suggestedTestFileName.split(".").pop() || "js"}
-          />
+          <div className="relative">
+            <div className="absolute top-4 right-10 z-10">
+              <Button
+                onClick={() =>
+                  downloadTestFile(
+                    testFile.testCode,
+                    testFile.suggestedTestFileName.split("/").pop() || `test-1.js`
+                  )
+                }
+                size="sm"
+                variant="outline"
+                className="bg-transparent text-gray-400 dark:text-gray-50 border-0 hover:bg-transparent hover:text-gray-50"
+              >
+                <Download className="h-3 w-3" />
+              </Button>
+            </div>
+            <CodeBlock
+              code={testFile.testCode}
+              filename={testFile.suggestedTestFileName}
+              language={testFile.suggestedTestFileName.split(".").pop() || "js"}
+            />
+          </div>
         ) : (
           generatedTests.map((test, index) => (
-            <CodeBlock
-              key={index}
-              code={test.testCode}
-              filename={test.filePath}
-              language={test.filePath.split(".").pop() || "js"}
-            />
+            <div key={index} className="relative">
+              <div className="absolute top-4 right-10 z-10">
+                <Button
+                  onClick={() =>
+                    downloadTestFile(
+                      test.testCode,
+                      test.filePath.split("/").pop() || `test-${index + 1}.js`
+                    )
+                  }
+                  size="sm"
+                  variant="outline"
+                  className="bg-transparent text-gray-400 dark:text-gray-50 border-0 hover:bg-transparent hover:text-gray-50"
+                >
+                  <Download className="h-3 w-3" />
+                </Button>
+              </div>
+              <CodeBlock
+                code={test.testCode}
+                filename={test.filePath}
+                language={test.filePath.split(".").pop() || "js"}
+              />
+            </div>
           ))
         )}
       </TabsContent>
@@ -114,8 +195,12 @@ export const TestResultsTabs: React.FC<TestResultsTabsProps> = ({
         ) : testsWithIssues.length === 0 ? (
           <div className="text-center py-8">
             <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900">No Issues Found</h3>
-            <p className="text-gray-500">All generated tests passed validation!</p>
+            <h3 className="text-lg font-medium text-gray-900">
+              No Issues Found
+            </h3>
+            <p className="text-gray-500">
+              All generated tests passed validation!
+            </p>
           </div>
         ) : (
           testsWithIssues.map((test, index) => (
