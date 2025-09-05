@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { createAuthClient } from 'better-auth/client';
+import { toast } from 'sonner';
 
 export const authClient = createAuthClient({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000', // Your backend URL
+  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:5000', // Your backend URL
 });
 
 // Auth API functions that work with React Query
@@ -53,7 +54,9 @@ export const authAPI = {
       return response.data;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: Error | any) {
-      console.error("Error checking GitHub link status:", error);
+      toast.error("Failed to check GitHub link status.", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
       return { success: false, message: error.message };
     }
   }

@@ -213,7 +213,6 @@ const isGenerating = isFileGenerating('/src/utils.ts');
 
 // Get detailed file state
 const fileState = getFileState('/src/utils.ts');
-console.log(fileState.progress, fileState.error, fileState.testFile);
 ```
 
 ### **Global Progress Tracking**

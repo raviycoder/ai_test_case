@@ -166,7 +166,6 @@ export const SessionItem = ({ session }: SessionItemProps) => {
               size="sm"
               className="flex items-center space-x-2 hover:bg-blue-50 hover:border-blue-300"
               onClick={() => {
-                console.log("View session:", session.sessionId);
               }}
             >
               <FileText className="w-4 h-4" />

@@ -32,15 +32,12 @@ const AppSidebar: React.FC = () => {
     owner: searchParams.get("_owner") ?? "",
   };
 
-  console.log("route:", { sessionId });
-  console.log("new-session query:", query);
 
   const { testFilePaths, getTestFilePaths } = useAITestGeneration();
 
   useEffect(()=>{
     if (sessionId !== "new-session"){
       getTestFilePaths(sessionId as string, `${query.owner}%2F${query.repo}`);
-      console.log("Fetching test file paths for session:", testFilePaths);
     }
   });
 

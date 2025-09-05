@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
   fallback?: string;
 }
 
-const ProtectedRoute = ({ children, fallback = '/login' }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children, fallback = '/' }: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   // Show loading spinner while checking auth

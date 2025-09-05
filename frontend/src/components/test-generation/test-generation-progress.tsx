@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { AILoader } from "../ui/ai-loader";
+import { toast } from "sonner";
 
 interface TestGenerationProgressProps {
   isGenerating: boolean;
@@ -102,8 +103,11 @@ export const TestGenerationProgress: React.FC<TestGenerationProgressProps> = ({
           setPersistedProgress(parsed);
         }
       } catch (error) {
-        console.error("Failed to parse persisted progress:", error);
+        toast.error("Failed to load saved progress. Starting fresh.", {
+          description: error instanceof Error ? error.message : "Unknown error",
+        });
         localStorage.removeItem(PROGRESS_STORAGE_KEY);
+        setPersistedProgress(null);
       }
     }
   }, [sessionId]);

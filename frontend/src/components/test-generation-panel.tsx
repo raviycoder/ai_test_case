@@ -17,6 +17,7 @@ import {
   TestResultsTabs,
 } from "./test-generation";
 import { Skeleton } from "./ui/skeleton";
+import { toast } from "sonner";
 
 interface TestGenerationPanelProps {
   selectedFiles: string[];
@@ -54,20 +55,16 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
     stopGeneration: stopBackgroundGeneration,
     reset: resetBackground,
   } = useRealtimeTestGeneration({
-    onProgress: (update) => {
-      console.log("🔄 Background progress:", update);
+    onProgress: () => {
     },
     onComplete: (result) => {
-      console.log("✅ Background generation completed:", result);
       if (result.generatedTests) {
         onComplete?.(result.generatedTests);
       }
     },
-    onError: (error) => {
-      console.error("❌ Background generation error:", error);
+    onError: () => {
     },
   });
-  console.log("📄 Background generated tests:", backgroundGeneratedTest);
 
   // Original synchronous generation hook
   const {
@@ -79,14 +76,12 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
     getTestFilePaths,
     hydrateSession,
   } = useAITestGeneration({
-    onUpdate: (update) => {
-      console.log("🔄 Sync progress:", update);
+    onUpdate: () => {
     },
     onComplete: (result) => {
       onComplete?.(result.generatedTests);
     },
-    onError: (err) => {
-      console.error(err);
+    onError: () => {
     },
   });
   const [searchParams] = useSearchParams();
@@ -112,7 +107,6 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
       hydrateSession(routeSessionId);
     }
 
-    console.log("👋👋🤪 Hydrating session:", backgroundProgress);
   }, [routeSessionId, hydrateSession, backgroundProgress]);
 
   // Load file contents when files are selected
@@ -135,8 +129,13 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
         }
         setFileContents(contents);
       } catch (err) {
-        console.error("Error loading file contents:", err);
-      } finally {
+        toast.error("Failed to load file contents. Please try again.", {
+          description: err instanceof Error ? err.message : "Unknown error",
+          action: {
+            label: "Retry", onClick: () => loadFileContents()
+          }
+        });
+            } finally {
         setIsLoadingFiles(false);
       }
     };
@@ -146,15 +145,6 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
   // On reload: fetch previously generated tests from DB by file path(s)
   useEffect(() => {
     const fetchSavedTests = async () => {
-      console.log("🔍 Fetching saved tests step 1:", {
-        selectedFiles: selectedFiles.length,
-        isGenerating,
-        generatedTestsLength: generatedTests.length,
-        filePath,
-        routeSessionId,
-        specificTestFile: !!specificTestFile,
-        backgroundGeneratedTest: !!backgroundGeneratedTest,
-      });
 
       // Early returns to prevent unnecessary API calls
       if (selectedFiles.length === 0) return;
@@ -166,31 +156,18 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
       // Only fetch if we have both filePath and sessionId
       if (filePath && routeSessionId && routeSessionId !== "new-session") {
         try {
-          console.log(
-            "🔍 Fetching saved tests step 2: calling getTestFileByPath"
-          );
           await getTestFileByPath(filePath, routeSessionId);
 
           if (testFile) {
-            console.log(
-              "🔍 Fetching saved tests step 3: found test file data",
-              testFile
-            );
 
             // Set the fetched test file directly since getTestFileByPath returns TestFileDto
             setSpecificTestFile(testFile);
-            console.log(
-              "🔍 Fetching saved tests step 4: set specificTestFile state"
-            );
           } else {
-            console.log(
-              "🔍 Fetching saved tests: no test file found, waiting for realtime data"
-            );
             // If no existing test file, wait for realtime generation
             // backgroundGeneratedTest will be set by the realtime hook when data arrives
           }
         } catch (error) {
-          console.error("🔍 Fetching saved tests error:", error);
+          return error;
           // On error, also wait for realtime data as fallback
         }
       }
@@ -223,7 +200,6 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
   // Handle realtime data fallback when no existing data found
   useEffect(() => {
     if (!specificTestFile && backgroundGeneratedTest) {
-      console.log("🔄 Using realtime data as fallback");
       // backgroundGeneratedTest is GeneratedTest, not TestFileDto
       // We should pass it to TestResultsTabs as generatedTests instead of specificTestFile
       // For now, we'll leave specificTestFile as null and let generatedTests handle it
@@ -272,7 +248,9 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
           options,
         });
       } catch (error) {
-        console.error("Failed to start background generation:", error);
+        toast.error("Failed to start test generation. Please try again.", {
+          description: error instanceof Error ? error.message : "Unknown error",
+        });
       }
     } else {
       // Fallback to synchronous generation
@@ -289,7 +267,6 @@ const TestGenerationPanel: React.FC<TestGenerationPanelProps> = ({
       resetBackground();
     }
     // Reset for sync generation if needed
-    console.log("Reset called");
   };
 
   // Show loading skeleton only when:

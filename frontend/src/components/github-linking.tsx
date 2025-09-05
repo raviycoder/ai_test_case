@@ -6,7 +6,6 @@ import { Alert, AlertDescription } from "./ui/alert";
 const GithubLink = ({isLinked}: {isLinked: boolean}) => {
     const { requestScopes, isRequestingScopes, error } = useLink();
 
-    console.log("isLinked:", isLinked);
     const handleLink = () => {
         requestScopes();
     };

@@ -1,8 +1,17 @@
-import { LogsIcon, Menu, X } from 'lucide-react'
+import { LogsIcon, Menu, X, User, Settings, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import React from 'react'
 import { cn } from '@/lib/utils'
 import { Link } from 'react-router-dom'
+import { useAuth } from '@/hooks/use-auth'
 
 const menuItems = [
     { name: 'Features', href: '#link' },
@@ -14,6 +23,7 @@ const menuItems = [
 export const HeroHeader = () => {
     const [menuState, setMenuState] = React.useState(false)
     const [isScrolled, setIsScrolled] = React.useState(false)
+    const { user, isAuthenticated, signOut, loginWithGitHub } = useAuth()
 
     React.useEffect(() => {
         const handleScroll = () => {
@@ -22,6 +32,14 @@ export const HeroHeader = () => {
         window.addEventListener('scroll', handleScroll)
         return () => window.removeEventListener('scroll', handleScroll)
     }, [])
+    
+    const handleSignOut = () => {
+        signOut()
+    }
+
+    const handleSignIn = () => {
+        loginWithGitHub('/') // Redirect to home after login
+    }
     return (
         <header>
             <nav
@@ -75,31 +93,91 @@ export const HeroHeader = () => {
                                 </ul>
                             </div>
                             <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                                <Button
-                                    asChild
-                                    variant="outline"
-                                    size="sm"
-                                    className={cn(isScrolled && 'lg:hidden')}>
-                                    <Link to="#">
-                                        <span>Login</span>
-                                    </Link>
-                                </Button>
-                                <Button
-                                    asChild
-                                    size="sm"
-                                    className={cn(isScrolled && 'lg:hidden')}>
-                                    <Link to="#">
-                                        <span>Sign Up</span>
-                                    </Link>
-                                </Button>
-                                <Button
-                                    asChild
-                                    size="sm"
-                                    className={cn(isScrolled ? 'lg:inline-flex' : 'hidden')}>
-                                    <Link to="#">
-                                        <span>Get Started</span>
-                                    </Link>
-                                </Button>
+                                {isAuthenticated ? (
+                                    <>
+                                        {/* Dashboard Link for authenticated users */}
+                                        <Button
+                                            asChild
+                                            variant="outline"
+                                            size="sm"
+                                            className={cn(isScrolled && 'lg:hidden')}>
+                                            <Link to="/home">
+                                                <span>Dashboard</span>
+                                            </Link>
+                                        </Button>
+                                        
+                                        {/* User Avatar with Dropdown */}
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full">
+                                                    <Avatar className="h-8 w-8">
+                                                        <AvatarImage 
+                                                            src={user?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'anonymous'}`} 
+                                                            alt={user?.name || 'User'} 
+                                                        />
+                                                        <AvatarFallback>
+                                                            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent className="w-56" align="end" forceMount>
+                                                <div className="flex items-center justify-start gap-2 p-2">
+                                                    <div className="flex flex-col space-y-1 leading-none">
+                                                        <p className="font-medium">{user?.name || 'Anonymous'}</p>
+                                                        <p className="w-[200px] truncate text-sm text-muted-foreground">
+                                                            {user?.email || 'No email'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem asChild>
+                                                    <Link to="/home" className="flex items-center">
+                                                        <User className="mr-2 h-4 w-4" />
+                                                        Dashboard
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem asChild>
+                                                    <Link to="/settings" className="flex items-center">
+                                                        <Settings className="mr-2 h-4 w-4" />
+                                                        Settings
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem
+                                                    className="flex items-center cursor-pointer"
+                                                    onClick={handleSignOut}
+                                                >
+                                                    <LogOut className="mr-2 h-4 w-4" />
+                                                    Sign out
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* Login/Signup buttons for unauthenticated users */}
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleSignIn}
+                                            className={cn(isScrolled && 'lg:hidden')}>
+                                            <span>Login</span>
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            onClick={handleSignIn}
+                                            className={cn(isScrolled && 'lg:hidden')}>
+                                            <span>Sign Up</span>
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            onClick={handleSignIn}
+                                            className={cn(isScrolled ? 'lg:inline-flex' : 'hidden')}>
+                                            <span>Get Started</span>
+                                        </Button>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>

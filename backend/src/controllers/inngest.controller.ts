@@ -26,7 +26,6 @@ interface BackgroundTestGenerationRequest {
 // Trigger background AI test generation
 export const triggerBackgroundTestGeneration = async (req: Request, res: Response) => {
   try {
-    console.log("😵😵Trigger background test generation request received");
     // Validate authentication
     const auth = await getAuth();
     const sessionResp = await auth.api.getSession({
@@ -67,7 +66,6 @@ export const triggerBackgroundTestGeneration = async (req: Request, res: Respons
     // Generate session ID if not provided
     const finalSessionId = sessionId ?? `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    console.log(`🚀 Triggering background test generation for session: ${finalSessionId}`);
 
     // Send event to Inngest for background processing
     const event = await inngest.send({
@@ -83,7 +81,6 @@ export const triggerBackgroundTestGeneration = async (req: Request, res: Respons
       },
     });
 
-    console.log("✅ Inngest event sent successfully:", event);
 
     // Return immediate response with session ID
     return res.json({

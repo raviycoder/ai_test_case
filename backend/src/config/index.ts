@@ -15,7 +15,7 @@ interface Config {
 }
 
 const config: Config = {
-  PORT: parseInt(process.env.PORT || '5000', 10),
+  PORT: parseInt(process.env.PORT ?? '5000', 10),
   NODE_ENV: process.env.NODE_ENV || 'development',
   MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017',
   DB_NAME: process.env.DB_NAME || 'ai_test_git',

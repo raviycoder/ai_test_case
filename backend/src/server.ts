@@ -74,6 +74,11 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api', routes);
 
+// redirect to frontend url
+app.get('/', (req, res) => {
+  res.redirect(config.FRONTEND_URL);
+});
+
 // Inngest serve endpoint - keep after API routes to avoid intercepting custom /api/inngest/* routes
 app.use("/api/inngest", serve({ client: inngest, functions }));
 
@@ -93,10 +98,13 @@ app.use(errorHandler);
   try {
     await connectToDatabase();
     app.listen(config.PORT, () => {
-      console.log(`🚀 Server running on port ${config.PORT}`);
-      console.log(`📱 Environment: ${config.NODE_ENV}`);
-      console.log(`🔗 API available at: http://localhost:${config.PORT}/api`);
-      console.log(`❤️  Health check: http://localhost:${config.PORT}/health`);
+      if (process.env.NODE_ENV !== 'production') {
+        {console.log(`🚀 Server running on port ${config.PORT}`);
+        console.log(`📱 Environment: ${config.NODE_ENV}`);
+        console.log(`🔗 API available at: http://localhost:${config.PORT}/api`);
+        console.log(`❤️  Health check: http://localhost:${config.PORT}/health`);
+      }
+      }
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

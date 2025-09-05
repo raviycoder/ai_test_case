@@ -14,7 +14,6 @@ import { useUser } from "@/hooks/use-user";
 export const QuickActionsCard = () => {
   const { userData } = useUser();
 
-  console.log("🤗🤗🤗 userData in QuickActionsCard:", userData);
 
   return (
     <Card className="shadow-sm border-0 bg-white/80 backdrop-blur-sm">

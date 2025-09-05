@@ -48,7 +48,6 @@ export const getGithubRepos = async (req: Request, res: Response) => {
             headers: fromNodeHeaders(req.headers),
         });
 
-        console.log("🤗🤗🤗 Token response:", tokenResp);
 
         if (tokenResp.error || !tokenResp?.accessToken) {
             return res.status(401).json({ success: false, message: "No provider access token" });
@@ -325,9 +324,6 @@ export const getFileContent = async (req: Request, res: Response) => {
     try {
         // Safely decode the file path that was encoded when sent from frontend
         const decodedPath = safeDecodeFilePath(filePath);
-        
-        console.log("Original path:", filePath);
-        console.log("Decoded file path:", decodedPath);
 
         const auth = await getAuth();
         const tokenResp = await auth.api.getAccessToken({
@@ -343,7 +339,6 @@ export const getFileContent = async (req: Request, res: Response) => {
 
         // Safely encode the path for GitHub API call
         const encodedPath = safeEncodeFilePath(decodedPath);
-        console.log("Sending to GitHub API with encoded path:", encodedPath);
 
         const axiosRes = await axios.get(`https://api.github.com/repos/${owner}/${repo}/contents/${encodedPath}`, {
             headers: {

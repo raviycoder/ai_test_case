@@ -4,12 +4,10 @@ import { useAITestGeneration } from '../hooks/use-ai-test-generation';
 // Example 1: Master Dashboard Component
 export const TestDashboard = () => {
   const masterHook = useAITestGeneration({
-    onUpdate: (update) => {
+    onUpdate: () => {
       // Broadcast updates to other components via global state/context
-      console.log('Master received update:', update);
     },
-    onComplete: (result) => {
-      console.log('Generation completed:', result);
+    onComplete: () => {
     }
   });
 
@@ -105,8 +103,7 @@ export const FileListManager = ({ repositoryId }: { repositoryId: string }) => {
 
   const loadFilePaths = async () => {
     const sessionId = 'current-session-id'; // Get from context/props
-    const paths = await listHook.getTestFilePaths(sessionId, repositoryId);
-    console.log('Available test files:', paths);
+    await listHook.getTestFilePaths(sessionId, repositoryId);
   };
 
   return (

@@ -1,7 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import App from "./App.tsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Login from "./pages/login.tsx";
 import Home from "./pages/home.tsx";
@@ -11,10 +10,12 @@ import Repo from "./pages/repo.tsx";
 import FilesDashboard from "./pages/files-dashboard.tsx";
 import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar.tsx";
 import AppSidebar from "./components/app-sidebar.tsx";
+import LandingPage from "./pages/landing/landing.tsx";
+import NotFound from "./pages/not-found.tsx";
 
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: "/home",
     element: (
       <ProtectedRoute>
         <Home />
@@ -26,20 +27,25 @@ const router = createBrowserRouter([
     element: <Login />,
   },
   {
-    path: "/app",
-    element: (
-      <ProtectedRoute>
-        <App />
-      </ProtectedRoute>
-    ),
-  },
-  {
     path: "/repo",
     element: (
       <ProtectedRoute>
         <Repo />
       </ProtectedRoute>
     ),
+  },
+  {
+    path: "/",
+    element: (
+      <LandingPage />
+    )
+
+  },
+  {
+    path: "*",
+    element:(
+      <NotFound />
+    )
   },
   {
     // file-test-case/new-session?repo=ai_test_case&_branch=main&_owner=raviycoder

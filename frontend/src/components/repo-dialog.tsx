@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useGitRepo, useRepoFiles, useRepoTree } from '@/hooks/use-git-repo';
+import { useGitRepo } from '@/hooks/use-git-repo';
 import {
   Dialog,
   DialogContent,
@@ -32,17 +32,8 @@ const RepoDialog: React.FC<RepoDialogProps> = ({ trigger }) => {
     hasNextPage,
     isFetchingNextPage,
   } = useGitRepo();
-  const [repoFiles, setRepoFiles] = React.useState<{ owner: string; name: string; branch?: string }>({ owner: '', name: '' });
   const containerRef = useRef<HTMLDivElement>(null);
-  const { files } = useRepoFiles(repoFiles.owner, repoFiles.name);
-  const { tree } = useRepoTree(repoFiles.owner, repoFiles.name, repoFiles.branch || 'main');
 
-  console.log("Files for", repoFiles, files);
-  useEffect(() => {
-    if (tree) {
-      console.log('Repo tree:', tree);
-    }
-  }, [tree]);
 
   // Attach scroll listener to the actual scrollable viewport and only load at true end
   useEffect(() => {
@@ -121,9 +112,7 @@ const RepoDialog: React.FC<RepoDialogProps> = ({ trigger }) => {
           ) : (
             <div className="space-y-4">
               {repositories.map((repo) => (
-                <Card key={repo.id} onClick={() => {
-                  setRepoFiles({ owner: repo.fullName.split('/')[0], name: repo.name, branch: repo.defaultBranch || 'main' });
-                }} className="w-full hover:shadow-md transition-shadow">
+                <Card key={repo.id} className="w-full hover:shadow-md transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">

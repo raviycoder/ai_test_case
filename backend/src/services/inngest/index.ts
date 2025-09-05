@@ -81,7 +81,6 @@ const generateAITests = inngest.createFunction(
       options = {},
     } = event.data as TestGenerationData;
 
-    console.log(`🚀 Starting AI test generation for user ${userId}, session ${sessionId}`);
 
     // Step 1: Create or Find Session
     const session = await step.run("create-session", async () => {
@@ -105,12 +104,10 @@ const generateAITests = inngest.createFunction(
           createdAt: new Date(),
         });
         await testSession.save();
-        console.log(`✅ Created new session: ${newSessionId}`);
       } else {
         testSession.status = "processing";
         testSession.framework = framework;
         await testSession.save();
-        console.log(`✅ Updated existing session: ${sessionId}`);
       }
 
       // Send progress update
@@ -149,7 +146,6 @@ const generateAITests = inngest.createFunction(
       const fileProgress = 10 + ((i / files.length) * 70); // 10-80% for file processing
       
       const testResult = await step.run(`generate-test-${i}`, async () => {
-        console.log(`🔄 Processing file ${i + 1}/${files.length}: ${file.path}`);
         
         // Send progress update
         await inngest.send({
@@ -191,7 +187,6 @@ const generateAITests = inngest.createFunction(
             options
           );
 
-          console.log(`✅ Generated test for ${file.path} (${generatedTest.summary.testCount} tests)`);
 
           // Publish to Inngest Realtime
           await publish(
@@ -241,7 +236,6 @@ const generateAITests = inngest.createFunction(
 
     // Step 3: Save Test Files to Database
     await step.run("save-test-files", async () => {
-      console.log(`💾 Saving ${generatedTests.length} test files to database`, generateAITests);
 
     const testFilePromises = generatedTests.map(async (test) => {
         const testFile = await createTestFile({
@@ -293,8 +287,6 @@ const generateAITests = inngest.createFunction(
         })
       );
 
-      console.log(`✅ Saved ${savedFiles.length} test files`);
-      return savedFiles;
     });
 
     // Step 4: Finalize Session
@@ -351,7 +343,6 @@ const generateAITests = inngest.createFunction(
         })
       );
 
-      console.log(`🎉 AI test generation completed for session ${session.sessionId}`);
     });
 
     return {

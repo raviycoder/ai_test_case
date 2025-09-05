@@ -157,7 +157,6 @@ export const getTestSession = async (req: Request, res: Response) => {
                 originalName: fileDetails?.repositoryId || ""
         };  
 
-        console.log("Session details:", sessionDetails);
         return res.status(200).json(sessionDetails);
     } catch (error) {
         console.error("Error fetching test session:", error);

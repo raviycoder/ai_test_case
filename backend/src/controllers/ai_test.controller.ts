@@ -23,7 +23,6 @@ const safeDecodeFilePath = (path: string): string => {
       // Single encoding was correct
     }
 
-    console.log(`Path decoding: original="${path}", decoded="${decoded}"`);
     return decoded;
   } catch (error) {
     console.warn(`Failed to decode path "${path}":`, error);
@@ -1206,11 +1205,6 @@ export const getTestFiles = async (req: Request, res: Response) => {
       isActive: true,
     }).sort({ "metadata.generatedAt": -1 });
 
-    console.log(
-      "🤝🤝 khelooere",
-      testFiles.map((file) => file.testCode)
-    );
-
     return res.json({
       success: true,
       data: {
@@ -1258,13 +1252,6 @@ export const getTestFileByPath = async (req: Request, res: Response) => {
 
     // Decode the file path to handle special characters
     const decodedFilePath = safeDecodeFilePath(filePath);
-
-    console.log(
-      "Fetching test file for path:",
-      decodedFilePath,
-      "and sessionId:",
-      sessionId
-    );
     const session_id = await TestSession.findOne({ sessionId: sessionId });
     // Find the test file by its original path
     const testFile = await TestFile.findOne({

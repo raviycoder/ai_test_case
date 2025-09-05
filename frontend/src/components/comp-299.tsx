@@ -11,7 +11,7 @@ export default function Component() {
           description: "It was a long journey, but we made it!",
           action: {
             label: "Undo",
-            onClick: () => console.log("Undo"),
+            onClick: () => alert("Undone!"),
           },
         })
       }}

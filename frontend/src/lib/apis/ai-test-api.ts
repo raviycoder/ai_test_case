@@ -2,8 +2,9 @@
 import axios from "axios";
 import { ungzip } from "pako";
 import type { ReactNode } from "react";
+import { toast } from "sonner";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/";
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5000/";
 
 // Configure axios for AI test endpoints
 const aiTestApi = axios.create({
@@ -346,7 +347,9 @@ export const deleteTestFileApi = async (
     const response = await aiTestApi.delete(`/${sessionId}/${encodedFilePath}`);
     return response.data;
   } catch (error) {
-    console.error("Error deleting test file:", error);
+    toast.error("Failed to delete test file.", {
+      description: error instanceof Error ? error.message : "Unknown error",
+    });
     return { success: false, message: "Failed to delete test file" };
   }
 };
@@ -435,9 +438,7 @@ export const generateTestsDirect = async (
     }
 
     return finalResult;
-  } catch (error) {
-    console.error("Direct test generation error:", error);
-    throw error instanceof Error
+  } catch (error) {   throw error instanceof Error
       ? error
       : new Error("Unknown error during test generation");
   }
@@ -485,12 +486,11 @@ export const getTestFileByPath = async (
     );
 
     if (response.data) {
-      const testCode = await convertToText(response.data.data.testCode.data);
-      console.log("👋👋Test code:", response.data.data.testCode, testCode);
+      await convertToText(response.data.data.testCode.data);
       return response.data as TestFileDto;
     }
   } catch (error) {
-    console.error("Error fetching test file by path:", error);
+    return error instanceof Error ? null : null;
   }
 
   return null;
@@ -514,7 +514,9 @@ export const convertToText = async (compressedData: string | null) => {
         const decompressed = ungzip(bytes, { to: 'string' });
         return decompressed;
     } catch (error) {
-        console.error("Decompression error:", error);
+        toast.error("Failed to convert compressed data to text.", {
+            description: error instanceof Error ? error.message : "Unknown error",
+        });
         return null;
     }
 }
@@ -527,7 +529,9 @@ export const getTestFilePaths = async (
       const response = await aiTestApi.get(`/repositories/${repositoryId}/${sessionId}`);
       return response.data.testFiles as string[];
     } catch (error) {
-      console.error("Error fetching test file paths:", error);
+      toast.error("Failed to fetch test file paths.", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
       return [];
     }
   }
@@ -572,7 +576,9 @@ export const triggerBackgroundTestGeneration = async (
     const response = await inngestApi.post("/trigger", requestData);
     return response.data;
   } catch (error) {
-    console.error("Error triggering background test generation:", error);
+    toast.error("Failed to trigger background test generation.", {
+      description: error instanceof Error ? error.message : "Unknown error",
+    });
     if (axios.isAxiosError(error)) {
       throw new Error(error.response?.data?.message || "Failed to trigger background test generation");
     }
@@ -585,7 +591,9 @@ export const getBackgroundTestStatus = async (sessionId: string) => {
     const response = await inngestApi.get(`/status/${sessionId}`);
     return response.data;
   } catch (error) {
-    console.error("Error getting background test status:", error);
+    toast.error("Failed to get background test status.", {
+      description: error instanceof Error ? error.message : "Unknown error",
+    });
     if (axios.isAxiosError(error)) {
       throw new Error(error.response?.data?.message || "Failed to get background test status");
     }
@@ -598,7 +606,9 @@ export const getRealtimeUpdates = async (sessionId: string) => {
     const response = await axios.get(`${API_BASE_URL}/api/realtime/updates/${sessionId}`);
     return response.data;
   } catch (error) {
-    console.error("Error getting realtime updates:", error);
+    toast.error("Failed to get realtime updates.", {
+      description: error instanceof Error ? error.message : "Unknown error",
+    });
     if (axios.isAxiosError(error)) {
       throw new Error(error.response?.data?.message || "Failed to get realtime updates");
     }

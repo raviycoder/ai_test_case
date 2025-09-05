@@ -96,13 +96,10 @@ function TestGenerationComponent() {
     reset,
   } = useBackgroundTestGeneration({
     onProgress: (update) => {
-      console.log('Progress:', update);
     },
     onComplete: (result) => {
-      console.log('Completed:', result);
     },
     onError: (error) => {
-      console.error('Error:', error);
     },
   });
 

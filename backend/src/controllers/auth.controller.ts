@@ -19,7 +19,6 @@ export const getDatabase = async (): Promise<Db> => {
   if (!client) {
     client = new MongoClient(MONGODB_URI);
     await client.connect();
-    console.log('✅ MongoDB connected for Better Auth');
   }
   
   database = client.db(DB_NAME);
@@ -51,12 +50,14 @@ export const getAuth = async () => {
     logger: {
       level: "info",
       log: (level, message, ...args) => {
-        console.log({
-          level,
-          message,
-          metadata: args,
-          timestamp: new Date().toISOString(),
-        });
+        if (process.env.NODE_ENV !== 'production') {
+          console.log({
+            level,
+            message,
+            metadata: args,
+            timestamp: new Date().toISOString(),
+          });
+        }
       },
     },
   });

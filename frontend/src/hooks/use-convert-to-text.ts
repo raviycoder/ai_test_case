@@ -1,4 +1,5 @@
 import { ungzip } from "pako";
+import { toast } from "sonner";
 
 
 
@@ -21,7 +22,9 @@ export const convertToText = (byteArray: { data: number[] }, algo: "gzip" | "br"
         // THEN convert decompressed bytes to string
         return new TextDecoder('utf-8').decode(decompressed);
     } catch (error) {
-        console.error("Error decompressing/converting to text:", error);
+        toast.error("Failed to convert byte array to text.", {
+            description: error instanceof Error ? error.message : "Unknown error",
+        });
         return "";
     }
 };

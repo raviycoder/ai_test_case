@@ -33,8 +33,8 @@ const FilesDashboard = () => {
   const { session, error, testFilePaths, getTestFilePaths, deleteTestFile } =
     useAITestGeneration({
       onError: (error) => {
-        console.log("Error:", error);
-      },
+        return error instanceof Error ? null : null;
+            },
     });
 
   useEffect(() => {
