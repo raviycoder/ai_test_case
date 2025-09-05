@@ -1,5 +1,7 @@
 import { useSessions } from "@/hooks/use-session";
-import { Header, LeftPanel, SessionsPanel } from "./home/index";
+import { Header } from "./home/header";
+import { LeftPanel } from "./home/left-panel";
+import { SessionsPanel } from "./home/session-panel";
 
 const Home = () => {
   const { sessions, isLoading: loading, error } = useSessions();

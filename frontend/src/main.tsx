@@ -2,16 +2,16 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Login from "./pages/login";
-import Home from "./pages/home";
+import Login from "./pages/login-page";
+import Home from "./pages/home-page";
 import ProtectedRoute from "./components/protecte-route";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Repo from "./pages/repo";
-import FilesDashboard from "./pages/files-dashboard";
+import Repo from "./pages/repo-page";
+import FilesDashboard from "./pages/files-dashboard-page";
 import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
 import AppSidebar from "./components/app-sidebar";
-import LandingPage from "./pages/landing/landing";
-import NotFound from "./pages/not-found";
+import LandingPage from "./pages/landing/landing-page";
+import NotFound from "./pages/not-found-page";
 
 const router = createBrowserRouter([
   {
