@@ -71,7 +71,7 @@ const FilesDashboard = () => {
         <div className=" ">
           <ResizablePanelGroup
             direction="horizontal"
-            className="max-w-md md:min-w-full"
+            className=" md:min-w-full"
           >
             <ResizablePanel defaultSize={50} minSize={30} className="p-8">
               <Skeleton className="h-[600px] w-full mt-12 bg-gray-200" />
@@ -85,13 +85,13 @@ const FilesDashboard = () => {
       </div>
     );
   return (
-    <div className="max-w-full h-full">
-      <code>{error}</code>
+    <div className="w-full h-full">
+      {/* <code>{error}</code> */}
       {!isLoading && content && (
-        <div className=" ">
+        <div className="flex max-w-full h-full mr-0">
           <ResizablePanelGroup
             direction="horizontal"
-            className="max-w-md md:min-w-full"
+            className="md:max-w-md md:min-w-full"
           >
             <ResizablePanel defaultSize={50} minSize={30}>
               <div className="flex items-center justify-between p-4 border-b">

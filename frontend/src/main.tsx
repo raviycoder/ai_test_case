@@ -51,7 +51,7 @@ const router = createBrowserRouter([
     // file-test-case/new-session?repo=ai_test_case&_branch=main&_owner=raviycoder
     path: "/file-test-case/:sessionId",
     element: (
-      <SidebarProvider>
+      <SidebarProvider className="w-full">
         <div className="flex">
           <AppSidebar />
           <SidebarTrigger />

@@ -1,15 +1,8 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Bot, Code, Zap, GitBranch, TestTube, Shield } from 'lucide-react'
 import type { ReactNode }  from 'react'
-import { useState, useEffect } from 'react'
-import { getMultipleUnsplashImages } from '@/lib/unsplash'
 
 export default function Features() {
-    const [featureImages, setFeatureImages] = useState<string[]>([]);
-
-    useEffect(() => {
-        getMultipleUnsplashImages(['ai', 'testing', 'automation']).then(setFeatureImages);
-    }, []);
 
     return (
         <section className="bg-zinc-50 py-16 md:py-32 dark:bg-transparent" id="features">

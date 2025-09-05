@@ -1,10 +1,9 @@
-import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useUser } from "@/hooks/use-user";
+import { DeleteAlert } from "@/components/delete-alert";
 
 export const Header = () => {
-  const { signOut, isSigningOut } = useAuth();
+  const { signOut } = useAuth();
   const { userData } = useUser();
 
   const handleSignOut = () => {
@@ -31,16 +30,14 @@ export const Header = () => {
                 className="w-10 h-10 rounded-full border-2 border-gray-200"
               />
             )}
-            <Button
-              onClick={handleSignOut}
-              disabled={isSigningOut}
-              variant="outline"
-              size="sm"
-              className="flex items-center space-x-2"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>{isSigningOut ? "Signing out..." : "Sign Out"}</span>
-            </Button>
+            <DeleteAlert
+              title="Sign Out"
+              description="Are you sure you want to sign out?"
+              onDelete={handleSignOut}
+              triggerText="Sign Out"
+              triggerVariant="destructive"
+              deleteButtonText="Sign Out"
+            />
           </div>
         </div>
       </div>

@@ -1,188 +1,217 @@
-import { LogsIcon, Menu, X, User, Settings, LogOut } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { LogsIcon, Menu, X, User, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import React from 'react'
-import { cn } from '@/lib/utils'
-import { Link } from 'react-router-dom'
-import { useAuth } from '@/hooks/use-auth'
+} from "@/components/ui/dropdown-menu";
+import React from "react";
+import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
+import { DeleteAlert } from "@/components/delete-alert";
 
 const menuItems = [
-    { name: 'Features', href: '#link' },
-    { name: 'Solution', href: '#link' },
-    { name: 'Pricing', href: '#link' },
-    { name: 'About', href: '#link' },
-]
+  { name: "Features", href: "#link" },
+  { name: "Solution", href: "#link" },
+  { name: "Pricing", href: "#link" },
+  { name: "About", href: "#link" },
+];
 
 export const HeroHeader = () => {
-    const [menuState, setMenuState] = React.useState(false)
-    const [isScrolled, setIsScrolled] = React.useState(false)
-    const { user, isAuthenticated, signOut, loginWithGitHub } = useAuth()
+  const [menuState, setMenuState] = React.useState(false);
+  const [isScrolled, setIsScrolled] = React.useState(false);
+  const { user, isAuthenticated, signOut } = useAuth();
 
-    React.useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 50)
-        }
-        window.addEventListener('scroll', handleScroll)
-        return () => window.removeEventListener('scroll', handleScroll)
-    }, [])
-    
-    const handleSignOut = () => {
-        signOut()
-    }
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-    const handleSignIn = () => {
-        loginWithGitHub('/') // Redirect to home after login
-    }
-    return (
-        <header>
-            <nav
-                data-state={menuState && 'active'}
-                className="fixed z-20 w-full px-2">
-                <div className={cn('mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12', isScrolled && 'bg-background/50 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-5')}>
-                    <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
-                        <div className="flex w-full justify-between lg:w-auto">
-                            <Link
-                                to="/"
-                                aria-label="home"
-                                className="flex items-center space-x-2">
-                                <LogsIcon />
-                            </Link>
+  const handleSignOut = () => {
+    signOut();
+  };
+  return (
+    <header>
+      <nav
+        data-state={menuState && "active"}
+        className="fixed z-20 w-full px-2"
+      >
+        <div
+          className={cn(
+            "mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12",
+            isScrolled &&
+              "bg-background/50 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-5"
+          )}
+        >
+          <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
+            <div className="flex w-full justify-between lg:w-auto">
+              <Link
+                to="/"
+                aria-label="home"
+                className="flex items-center space-x-2"
+              >
+                <LogsIcon />
+              </Link>
 
-                            <button
-                                onClick={() => setMenuState(!menuState)}
-                                aria-label={menuState == true ? 'Close Menu' : 'Open Menu'}
-                                className="relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5 lg:hidden">
-                                <Menu className="in-data-[state=active]:rotate-180 in-data-[state=active]:scale-0 in-data-[state=active]:opacity-0 m-auto size-6 duration-200" />
-                                <X className="in-data-[state=active]:rotate-0 in-data-[state=active]:scale-100 in-data-[state=active]:opacity-100 absolute inset-0 m-auto size-6 -rotate-180 scale-0 opacity-0 duration-200" />
-                            </button>
+              <button
+                onClick={() => setMenuState(!menuState)}
+                aria-label={menuState == true ? "Close Menu" : "Open Menu"}
+                className="relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5 lg:hidden"
+              >
+                <Menu className="in-data-[state=active]:rotate-180 in-data-[state=active]:scale-0 in-data-[state=active]:opacity-0 m-auto size-6 duration-200" />
+                <X className="in-data-[state=active]:rotate-0 in-data-[state=active]:scale-100 in-data-[state=active]:opacity-100 absolute inset-0 m-auto size-6 -rotate-180 scale-0 opacity-0 duration-200" />
+              </button>
+            </div>
+
+            <div className="absolute inset-0 m-auto hidden size-fit lg:block">
+              <ul className="flex gap-8 text-sm">
+                {menuItems.map((item, index) => (
+                  <li key={index}>
+                    <Link
+                      to={item.href}
+                      className="text-muted-foreground hover:text-accent-foreground block duration-150"
+                    >
+                      <span>{item.name}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="bg-background in-data-[state=active]:block lg:in-data-[state=active]:flex mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border p-6 shadow-2xl shadow-zinc-300/20 md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
+              <div className="lg:hidden">
+                <ul className="space-y-6 text-base">
+                  {menuItems.map((item, index) => (
+                    <li key={index}>
+                      <Link
+                        to={item.href}
+                        className="text-muted-foreground hover:text-accent-foreground block duration-150"
+                      >
+                        <span>{item.name}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+                {isAuthenticated ? (
+                  <>
+                    {/* Dashboard Link for authenticated users */}
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className={cn(isScrolled && "lg:hidden")}
+                    >
+                      <Link to="/home">
+                        <span>Dashboard</span>
+                      </Link>
+                    </Button>
+
+                    {/* User Avatar with Dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="relative h-8 w-8 rounded-full"
+                        >
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage
+                              src={
+                                user?.image ||
+                                `https://api.dicebear.com/7.x/avataaars/svg?seed=${
+                                  user?.name || "anonymous"
+                                }`
+                              }
+                              alt={user?.name || "User"}
+                            />
+                            <AvatarFallback>
+                              {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        className="w-56"
+                        align="end"
+                        forceMount
+                      >
+                        <div className="flex items-center justify-start gap-2 p-2">
+                          <div className="flex flex-col space-y-1 leading-none">
+                            <p className="font-medium">
+                              {user?.name || "Anonymous"}
+                            </p>
+                            <p className="w-[200px] truncate text-sm text-muted-foreground">
+                              {user?.email || "No email"}
+                            </p>
+                          </div>
                         </div>
-
-                        <div className="absolute inset-0 m-auto hidden size-fit lg:block">
-                            <ul className="flex gap-8 text-sm">
-                                {menuItems.map((item, index) => (
-                                    <li key={index}>
-                                        <Link
-                                            to={item.href}
-                                            className="text-muted-foreground hover:text-accent-foreground block duration-150">
-                                            <span>{item.name}</span>
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        <div className="bg-background in-data-[state=active]:block lg:in-data-[state=active]:flex mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border p-6 shadow-2xl shadow-zinc-300/20 md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
-                            <div className="lg:hidden">
-                                <ul className="space-y-6 text-base">
-                                    {menuItems.map((item, index) => (
-                                        <li key={index}>
-                                            <Link
-                                                to={item.href}
-                                                className="text-muted-foreground hover:text-accent-foreground block duration-150">
-                                                <span>{item.name}</span>
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                            <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                                {isAuthenticated ? (
-                                    <>
-                                        {/* Dashboard Link for authenticated users */}
-                                        <Button
-                                            asChild
-                                            variant="outline"
-                                            size="sm"
-                                            className={cn(isScrolled && 'lg:hidden')}>
-                                            <Link to="/home">
-                                                <span>Dashboard</span>
-                                            </Link>
-                                        </Button>
-                                        
-                                        {/* User Avatar with Dropdown */}
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full">
-                                                    <Avatar className="h-8 w-8">
-                                                        <AvatarImage 
-                                                            src={user?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'anonymous'}`} 
-                                                            alt={user?.name || 'User'} 
-                                                        />
-                                                        <AvatarFallback>
-                                                            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent className="w-56" align="end" forceMount>
-                                                <div className="flex items-center justify-start gap-2 p-2">
-                                                    <div className="flex flex-col space-y-1 leading-none">
-                                                        <p className="font-medium">{user?.name || 'Anonymous'}</p>
-                                                        <p className="w-[200px] truncate text-sm text-muted-foreground">
-                                                            {user?.email || 'No email'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem asChild>
-                                                    <Link to="/home" className="flex items-center">
-                                                        <User className="mr-2 h-4 w-4" />
-                                                        Dashboard
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem asChild>
-                                                    <Link to="/settings" className="flex items-center">
-                                                        <Settings className="mr-2 h-4 w-4" />
-                                                        Settings
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem
-                                                    className="flex items-center cursor-pointer"
-                                                    onClick={handleSignOut}
-                                                >
-                                                    <LogOut className="mr-2 h-4 w-4" />
-                                                    Sign out
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </>
-                                ) : (
-                                    <>
-                                        {/* Login/Signup buttons for unauthenticated users */}
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={handleSignIn}
-                                            className={cn(isScrolled && 'lg:hidden')}>
-                                            <span>Login</span>
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            onClick={handleSignIn}
-                                            className={cn(isScrolled && 'lg:hidden')}>
-                                            <span>Sign Up</span>
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            onClick={handleSignIn}
-                                            className={cn(isScrolled ? 'lg:inline-flex' : 'hidden')}>
-                                            <span>Get Started</span>
-                                        </Button>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-        </header>
-    )
-}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link to="/home" className="flex items-center">
+                            <User className="mr-2 h-4 w-4" />
+                            Dashboard
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/settings" className="flex items-center">
+                            <Settings className="mr-2 h-4 w-4" />
+                            Settings
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DeleteAlert
+                          title="Sign Out"
+                          triggerText="Sign Out"
+                          triggerVariant="destructive"
+                          deleteButtonText="Sign Out"
+                          description="Are you sure you want to sign out?"
+                          onDelete={handleSignOut}
+                        />
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                ) : (
+                  <>
+                    {/* Login/Signup buttons for unauthenticated users */}
+                    <Link to={"/login"}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(isScrolled && "lg:hidden")}
+                      >
+                        <span>Login</span>
+                      </Button>
+                    </Link>
+                    <Link to={"/login"}>
+                      <Button
+                        size="sm"
+                        className={cn(isScrolled && "lg:hidden")}
+                      >
+                      <span>Sign Up</span>
+                    </Button>
+                    </Link>
+                    <Button
+                      size="sm"
+                      className={cn(isScrolled ? "lg:inline-flex" : "hidden")}
+                    >
+                      <span>Get Started</span>
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+  );
+};
