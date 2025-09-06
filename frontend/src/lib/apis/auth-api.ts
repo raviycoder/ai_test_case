@@ -1,8 +1,9 @@
 import { apiClient } from '../api-client';
 import { createAuthClient } from 'better-auth/react';
 import { toast } from 'sonner';
-import { getBetterAuthCookieHeader, debugCookies } from '../cookie-utils';
+import { getBetterAuthCookieHeader } from '../cookie-utils';
 import { createEnhancedAuthClient } from '../better-auth-fetch';
+import axios from 'axios';
 
 export const authClient = createAuthClient({
   baseURL: import.meta.env.VITE_API_URL, // Your backend URL
@@ -22,46 +23,16 @@ export const authAPI = {
     });
   },
 
-  // Get current session using Better Auth
+  // Get current session
   getSession: async () => {
-    try {
-      console.log('Getting session with Better Auth...');
-      debugCookies(); // Debug current cookies
-      const { data } = await authClient.getSession();
-      console.log('Better Auth session data:', data);
-      return data;
-    } catch (error) {
-      console.error('Better Auth session error:', error);
-      // Fallback to enhanced client with manual cookies
-      try {
-        console.log('Trying enhanced auth client...');
-        const sessionData = await enhancedAuthClient.getSession();
-        console.log('Enhanced auth client session data:', sessionData);
-        return sessionData;
-      } catch (enhancedError) {
-        console.error('Enhanced auth client error:', enhancedError);
-        throw error;
-      }
+    console.log('Fetching session with manual cookies...', getBetterAuthCookieHeader());
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/session`, { withCredentials: true,
+      headers: { 'Cookie': getBetterAuthCookieHeader() || '' }
+     });
+    if (!response.data.success) {
+      throw new Error('Failed to fetch session');
     }
-  },
-
-  // Alternative session method using manual cookie headers
-  getSessionWithManualCookies: async () => {
-    try {
-      const cookieHeader = getBetterAuthCookieHeader();
-      console.log('Manual cookie header:', cookieHeader);
-      
-      const response = await apiClient.get('/debug/session', {
-        headers: {
-          'Cookie': cookieHeader
-        }
-      });
-      
-      return response.data;
-    } catch (error) {
-      console.error('Manual session error:', error);
-      throw error;
-    }
+    return response.data;
   },
 
   // Sign out
@@ -89,7 +60,10 @@ export const authAPI = {
   // Link Status
   isGitHubLinked: async (userId: string) => {
     try {
-      const response = await apiClient.get(`/api/github/is-linked/${userId}`);
+      const response = await apiClient.get(`/api/github/is-linked/${userId}`, {
+        withCredentials: true,
+        headers: { 'Cookie': getBetterAuthCookieHeader() || '' }
+      });
       if (!response.data.success) {
         throw new Error("Failed to check GitHub link status");
       }
