@@ -23,8 +23,8 @@ export const authAPI = {
 
   // Get current session using Better Auth
   getSession: async () => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/session`, { credentials: "include", headers: { "Content-Type": "application/json" } });
-    console.log('Session response:', response);
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/session`, { credentials: "include" });
+    console.log('Session response:', response.json());
     if (!response.ok) {
       throw new Error('Failed to fetch session');
     }
