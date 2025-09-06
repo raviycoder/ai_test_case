@@ -34,22 +34,6 @@ app.use(helmet());
 // });
 // app.use(limiter);
 
-// CORS configuration
-app.use(cors({
-  origin: config.FRONTEND_URL || "*",
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-// Compression middleware
-app.use(compression());
-
-// Logging middleware
-if (config.NODE_ENV !== 'test') {
-  app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev'));
-}
-
 // Better Auth middleware - must come before express.json()
 app.all("/api/auth/*", async (req, res, next) => {
   try {
@@ -61,6 +45,21 @@ app.all("/api/auth/*", async (req, res, next) => {
     return res.status(500).json({ error: 'Authentication service error' });
   }
 });
+
+// CORS configuration
+app.use(cors({
+  origin: config.FRONTEND_URL || "*",
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+}));
+
+// Compression middleware
+app.use(compression());
+
+// Logging middleware
+if (config.NODE_ENV !== 'test') {
+  app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev'));
+}
 
 
 
