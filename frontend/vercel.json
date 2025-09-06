@@ -1,4 +1,6 @@
   {
+    "version": 2,
+    "name": "ai-test-gen-frontend",
     "rewrites": [
       {
         "source": "/(.*)",

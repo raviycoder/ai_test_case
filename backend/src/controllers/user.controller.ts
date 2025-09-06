@@ -102,6 +102,7 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
 export const getUserSession = asyncHandler(async (req: Request, res: Response) => {
   try {
     const auth = await getAuth();
+    console.log('Auth instance:', auth, req.headers);  
     const session = await auth.api.getSession({
       headers: fromNodeHeaders(req.headers)
     });
@@ -110,7 +111,7 @@ export const getUserSession = asyncHandler(async (req: Request, res: Response) =
       return res.status(200).json({
         success: true,
         message: 'No active session',
-        data: null
+        data: session
       });
     }
 

@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 
 export const authClient = createAuthClient({
   baseURL: import.meta.env.VITE_API_URL, // Your backend URL
+  fetchOptions: { credentials: "include" } // Important for cookies in production
 });
 
 // Auth API functions that work with React Query
