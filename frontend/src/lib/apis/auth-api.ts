@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { getBetterAuthCookieHeader } from '../cookie-utils';
 import { createEnhancedAuthClient } from '../better-auth-fetch';
 import axios from 'axios';
+import { authenticatedRequest } from '../auth-headers';
 
 export const authClient = createAuthClient({
   baseURL: import.meta.env.VITE_API_URL, // Your backend URL
@@ -26,11 +27,20 @@ export const authAPI = {
   // Get current session
   getSession: async () => {
     console.log('Fetching session with manual cookies...', getBetterAuthCookieHeader());
+    const cookie = getBetterAuthCookieHeader();
     const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/session`, { withCredentials: true,
-      headers: { 'Cookie': getBetterAuthCookieHeader() || '' }
+      headers: { 'Cookie': cookie || '' }
      });
-    if (!response.data.success) {
-      throw new Error('Failed to fetch session');
+    if (!response.data || response.data == null) {
+      const auth = authenticatedRequest(`${import.meta.env.VITE_API_URL}/api/auth/session`, {
+        method: 'GET',
+        headers: { 'Cookie': cookie || '' }
+      });
+
+      if (!auth) {
+        throw new Error('Failed to fetch session');
+      }
+      return auth;
     }
     return response.data;
   },
