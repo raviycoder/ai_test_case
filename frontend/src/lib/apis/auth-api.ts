@@ -2,7 +2,6 @@ import { apiClient } from '../api-client';
 import { createAuthClient } from 'better-auth/react';
 import { toast } from 'sonner';
 import { createEnhancedAuthClient } from '../better-auth-fetch';
-import axios from 'axios';
 
 export const authClient = createAuthClient({
   baseURL: import.meta.env.VITE_API_URL, // Your backend URL
