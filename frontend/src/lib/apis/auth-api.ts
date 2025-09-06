@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { createAuthClient } from 'better-auth/client';
+import { createAuthClient } from 'better-auth/react';
 import { toast } from 'sonner';
 
 export const authClient = createAuthClient({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:5000', // Your backend URL
+  baseURL: import.meta.env.VITE_API_URL, // Your backend URL
 });
 
 // Auth API functions that work with React Query
@@ -18,7 +18,8 @@ export const authAPI = {
 
   // Get current session
   getSession: async () => {
-    return authClient.getSession();
+    const { data } = await authClient.getSession();
+    return data;
   },
 
   // Sign out
@@ -31,7 +32,7 @@ export const authAPI = {
     return authClient.linkSocial({
       provider: 'github',
       scopes:['repo'],
-      callbackURL: import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173', // Redirect after linking
+      callbackURL: import.meta.env.VITE_FRONTEND_URL, // Redirect after linking
     })
   },
 
