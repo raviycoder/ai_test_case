@@ -12,6 +12,7 @@ import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
 import AppSidebar from "./components/app-sidebar";
 import LandingPage from "./pages/landing/landing-page";
 import NotFound from "./pages/not-found-page";
+import { Toaster } from "sonner";
 
 const router = createBrowserRouter([
   {
@@ -87,6 +88,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
+        <Toaster />
       </QueryClientProvider>
   </StrictMode>
 );
