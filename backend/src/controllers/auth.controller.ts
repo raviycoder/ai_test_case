@@ -35,24 +35,9 @@ export const getAuth = async () => {
   // Create Better Auth instance with connected database
   authInstance = betterAuth({
     database: mongodbAdapter(db),
-    baseURL: process.env.BETTER_AUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5000',
+    baseURL: process.env.BETTER_AUTH_URL,
     hooks: {
       before: beforeAuthHook,
-    },
-    session: {
-      expiresIn: 60 * 60 * 24 * 7, // 7 days
-      updateAge: 60 * 60 * 24, // 1 day
-      cookieCache: {
-        enabled: true,
-        maxAge: 60 * 5 // 5 minutes
-      }
-    },
-    cookies: {
-      domain: process.env.NODE_ENV === 'production' 
-        ? process.env.COOKIE_DOMAIN 
-        : undefined,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     },
     socialProviders: {
       github: {
@@ -61,13 +46,13 @@ export const getAuth = async () => {
       },
     },
     trustedOrigins: [
-      process.env.FRONTEND_URL || 'http://localhost:5173',
-      ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : [])
+      process.env.FRONTEND_URL as string,
+      process.env.BETTER_AUTH_URL as string,
     ],
     logger: {
-      level: process.env.NODE_ENV === 'production' ? "error" : "info",
+      level: "info",
       log: (level, message, ...args) => {
-        if (process.env.NODE_ENV !== 'production' || level === 'error') {
+        if (process.env.NODE_ENV !== 'production') {
           console.log({
             level,
             message,

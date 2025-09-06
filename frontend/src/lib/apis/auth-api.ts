@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 
 export const authClient = createAuthClient({
   baseURL: import.meta.env.VITE_API_URL, // Your backend URL
-  credentials: 'include', // Important for cookies in production
 });
 
 // Auth API functions that work with React Query
@@ -19,13 +18,11 @@ export const authAPI = {
 
   // Get current session
   getSession: async () => {
-    try {
-      const response = await authClient.getSession();
-      return response;
-    } catch (error) {
-      console.error('Session fetch error:', error);
-      return { data: null, error };
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/session`, { withCredentials: true });
+    if (!response.data.success) {
+      throw new Error('Failed to fetch session');
     }
+    return response.data;
   },
 
   // Sign out
