@@ -40,19 +40,7 @@ export const getAuth = async () => {
     advanced: {
       crossSubDomainCookies: {
         enabled: true,
-        domain: "ai-test-case-iprf.vercel.app", // Set your domain for production
-      },
-      cookies: {
-        session_token: {
-          attributes: {
-            sameSite: "none",
-          },
-        },
-        session_data: {
-          attributes: {
-            sameSite: "none",
-          },
-        },
+        domain: ".vercel.app", // Set your domain for production
       },
     },
     session: {
