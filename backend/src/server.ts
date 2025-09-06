@@ -16,11 +16,6 @@ import realtimeRoutes from './routes/realtime.route';
 import { getAuth } from './controllers/auth.controller';
 import { serve } from "inngest/express";
 import { inngest, functions } from "./services/inngest/index";
-import { createTestSession, getUserSessions } from './controllers/test_session.controller';
-import { deleteTestFile, generateTests, generateTestsDirect, getTestFileByPath, getTestFilePaths, getTestFiles, getTestFilesByRepository, getTestStatus, updateTestFileStatus } from './controllers/ai_test.controller';
-import { getFileContent, getGithubRepos, getRepoFiles, getRepoTree } from './controllers/repo.controller';
-import { isGitHubAccountLinked } from './controllers/github.controller';
-import { getRealtimeToken, getRealTimeUpdates } from './controllers/realtime.controller';
 
 // Create Express app
 const app = express();
@@ -83,62 +78,11 @@ app.get('/health', (req, res) => {
 });
 
 // API routes - mount BEFORE Inngest to ensure proper routing
-// app.use('/api/users', userRoutes);
-// app.use('/api/github', githubRoutes);
-// app.use('/api/ai-tests', aiTestRoutes);
-// app.use('/api/realtime', realtimeRoutes);
-// Create a new test session
-app.post('/api/ai-tests/sessions', createTestSession);
+app.use('/api/users', userRoutes);
+app.use('/api/github', githubRoutes);
+app.use('/api/ai-tests', aiTestRoutes);
+app.use('/api/realtime', realtimeRoutes);
 
-// Get all sessions for the authenticated user
-app.get('/api/ai-tests/sessions', getUserSessions);
-
-// Get test generation status
-app.get('/api/ai-tests/sessions/:sessionId/status', getTestStatus);
-
-// Generate tests for selected files (requires existing session)
-app.post('/api/ai-tests/generate', generateTests);
-
-// Generate tests directly without session (creates session after successful generation)
-app.post('/api/ai-tests/generate-direct', generateTestsDirect);
-
-// Get test files for a specific session
-app.get('/api/ai-tests/sessions/:sessionId/test-files', getTestFiles);
-
-// Get test files for a specific path
-app.get('/api/ai-tests/test-file/:sessionId/:filePath*', getTestFileByPath);
-// Route /api/ai-tests/test-file/session_1755164337994_yp98ggyyg/src/components/Filter.tsx not found
-
-// Get test files for a repository
-app.get('/api/ai-tests/repositories/:repositoryId/test-files', getTestFilesByRepository);
-
-// Get only paths of test files
-app.get('/api/ai-tests/repositories/:repositoryId/:sessionId', getTestFilePaths);
-
-// Update test file status
-app.patch('/api/ai-tests/test-files/:testFileId', updateTestFileStatus);
-
-app.delete('/api/ai-tests/:sessionId/:filePath', deleteTestFile);
-
-// GET /api/github/repos
-app.get("/api/github/repos", getGithubRepos);
-
-// GET /api/github/repos/:owner/:repo/contents
-app.get("/api/github/repos/:owner/:repo/contents", getRepoFiles);
-
-// GET /api/github/repos/:owner/:repo/tree?branch=main
-app.get("/api/github/repos/:owner/:repo/tree", getRepoTree);
-
-// GET /api/github/repos/:owner/:repo/contents/:path(*) - path can include slashes
-app.get("/api/github/repos/:owner/:repo/contents/*", getFileContent);
-
-app.get("/api/github/is-linked/:id", isGitHubAccountLinked);
-
-// Get subscription token for realtime updates
-app.get("/api/realtime/token/:sessionId", getRealtimeToken);
-
-// Get realtime updates from session db
-app.get("/api/realtime/updates/:sessionId", getRealTimeUpdates);
 // Inngest serve endpoint - mount AFTER API routes with specific path
 app.use("/api/inngest", serve({ client: inngest, functions }));
 

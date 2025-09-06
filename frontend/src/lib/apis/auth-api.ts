@@ -18,8 +18,11 @@ export const authAPI = {
 
   // Get current session
   getSession: async () => {
-    const { data } = await authClient.getSession();
-    return data;
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/session`, { withCredentials: true });
+    if (!response.data.success) {
+      throw new Error('Failed to fetch session');
+    }
+    return response.data;
   },
 
   // Sign out

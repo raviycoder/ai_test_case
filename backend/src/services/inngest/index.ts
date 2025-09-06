@@ -3,7 +3,7 @@ import { realtimeMiddleware, channel, topic } from "@inngest/realtime";
 import { Types } from "mongoose";
 import TestSession from "../../models/test_session.model";
 import TestFile from "../../models/test_file.model";
-import { compressTest } from "../../services/compress";
+import { compressTest } from "../compress";
 
 // Import existing functions from AI test controller
 import { 

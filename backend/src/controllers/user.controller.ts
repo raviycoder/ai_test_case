@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { User } from '../models/user.model';
 import { asyncHandler, createError } from '../middleware/errorHandler';
 import { ApiResponse } from '../types/common';
+import { getAuth } from './auth.controller';
+import { fromNodeHeaders } from 'better-auth/node';
 
 export const getUsers = asyncHandler(async (req: Request, res: Response) => {
   const users = await User.find().sort({ createdAt: -1 });
@@ -95,4 +97,30 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
   };
 
   res.status(200).json(response);
+});
+
+export const getUserSession = asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const auth = await getAuth();
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers)
+    });
+
+    if (!session || !session.user) {
+      return res.status(200).json({
+        success: true,
+        message: 'No active session',
+        data: null
+      });
+    }
+
+    return res.status(200).json(session);
+  } catch (error) {
+    console.error('Error fetching session:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve session',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
