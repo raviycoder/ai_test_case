@@ -5,6 +5,7 @@ import { getBetterAuthCookieHeader } from '../cookie-utils';
 import { createEnhancedAuthClient } from '../better-auth-fetch';
 import axios from 'axios';
 import { authenticatedRequest } from '../auth-headers';
+import Cookies from 'js-cookie';
 
 export const authClient = createAuthClient({
   baseURL: import.meta.env.VITE_API_URL, // Your backend URL
@@ -13,9 +14,9 @@ export const authClient = createAuthClient({
 
 // Enhanced auth client with manual cookie handling
 export const enhancedAuthClient = createEnhancedAuthClient(import.meta.env.VITE_API_URL);
-
 // Auth API functions that work with React Query
 export const authAPI = {
+
   // GitHub OAuth login
   signInWithGitHub: async (callbackURL?: string) => {
     return authClient.signIn.social({
@@ -26,15 +27,17 @@ export const authAPI = {
 
   // Get current session
   getSession: async () => {
-    console.log('Fetching session with manual cookies...', getBetterAuthCookieHeader());
-    const cookie = getBetterAuthCookieHeader();
+    const betterAuthToken = Cookies.get('__Secure-better-auth.session_token');
+    const betterAuthSession = Cookies.get('__Secure-better-auth.session_data');
+    console.log('Better Auth Token:', betterAuthToken);
+    console.log('Better Auth Session:', betterAuthSession);
     const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/session`, { withCredentials: true,
-      headers: { 'Cookie': cookie || '' }
+      headers: { 'Cookie': `${betterAuthToken || ''}; ${betterAuthSession || ''}` }
      });
     if (!response.data || response.data == null) {
       const auth = authenticatedRequest(`${import.meta.env.VITE_API_URL}/api/auth/session`, {
         method: 'GET',
-        headers: { 'Cookie': cookie || '' }
+        headers: { 'Cookie': `${betterAuthToken || ''}; ${betterAuthSession || ''}` }
       });
 
       if (!auth) {
