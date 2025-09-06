@@ -42,19 +42,6 @@ export const getAuth = async () => {
         maxAge: 60 * 60 * 24 * 7, // 7 days
       },
     },
-    cookies: {
-      sessionToken: {
-        name: "better-auth.session_token",
-        options: {
-          httpOnly: true,
-          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-          secure: process.env.NODE_ENV === 'production',
-          domain: process.env.NODE_ENV === 'production' 
-            ? process.env.COOKIE_DOMAIN 
-            : undefined,
-        },
-      },
-    },
     hooks: {
       before: beforeAuthHook,
     },
