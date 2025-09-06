@@ -43,12 +43,6 @@ export const getAuth = async () => {
         domain: ".vercel.app", // Set your domain for production
       },
     },
-    session: {
-      cookieCache: {
-        enabled: true,
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-      },
-    },
     hooks: {
       before: beforeAuthHook,
     },
