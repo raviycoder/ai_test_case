@@ -19,7 +19,7 @@ export const AuthDebugComponent: React.FC = () => {
     try {
       // Test manual cookies session
       console.log('2. Testing manual cookies session...');
-      const manualSession = await authAPI.getSessionWithManualCookies();
+      const manualSession = await authAPI.getSession();
       console.log('Manual session result:', manualSession);
     } catch (error) {
       console.error('Manual session failed:', error);
