@@ -35,6 +35,12 @@ export const getAuth = async () => {
 
   // Create Better Auth instance with connected database
   authInstance = betterAuth({
+    advanced: {
+      crossSubDomainCookies: {
+        enabled: true,
+        domain: "ai-test-case-iprf.vercel.app", // your domain
+      },
+    },
     database: mongodbAdapter(db),
     baseURL: process.env.BETTER_AUTH_URL,
     hooks: {

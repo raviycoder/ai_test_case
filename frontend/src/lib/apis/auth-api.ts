@@ -3,6 +3,7 @@ import { createAuthClient } from 'better-auth/react';
 import { toast } from 'sonner';
 import { createEnhancedAuthClient } from '../better-auth-fetch';
 import axios from 'axios';
+import Cookies from 'js-cookie';
 
 export const authClient = createAuthClient({
   baseURL: import.meta.env.VITE_API_URL, // Your backend URL
@@ -27,8 +28,10 @@ export const authAPI = {
   // Get current session using Better Auth
   getSession: async () => {
     const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/session`, { withCredentials: true });
-    console.log('Session response:', response.data);
+    const getToken = Cookies.get('__Secure-better-auth.session_token');
+    console.log('Session fetch token:', getToken);
     if (!response.data) {
+      toast.error('If you see this error repeatedly, It\'s means the error of cookies is not resolved. try to run this app in local development. and sorry for the inconvenience.');
       throw new Error('Failed to fetch session');
     }
     return response.data;
