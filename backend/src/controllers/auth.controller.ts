@@ -53,6 +53,8 @@ export const getAuth = async () => {
       },
     },
     trustedOrigins: [
+      "https://*.vercel.app",
+      "https://vercel.app",
       process.env.FRONTEND_URL as string,
       process.env.BETTER_AUTH_URL as string,
     ],
