@@ -24,12 +24,12 @@ export const authAPI = {
 
   // Get current session using Better Auth
   getSession: async () => {
-    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/session`, { withCredentials: true });
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/session`, { credentials: "include", headers: { "Content-Type": "application/json" } });
     console.log('Session response:', response);
-    if (!response.data.success) {
+    if (!response.ok) {
       throw new Error('Failed to fetch session');
     }
-    return response.data;
+    return response.json();
   },
 
   // Sign out

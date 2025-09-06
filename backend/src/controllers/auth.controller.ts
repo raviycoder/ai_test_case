@@ -3,6 +3,7 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient, Db } from "mongodb";
 import { beforeAuthHook } from "../middleware/auth.middleware";
 import { config } from "../config";
+import { getHeapSpaceStatistics } from "v8";
 
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/";
 const DB_NAME = process.env.DB_NAME || "ai_test_git";
@@ -39,7 +40,19 @@ export const getAuth = async () => {
     advanced: {
       crossSubDomainCookies: {
         enabled: true,
-        domain: config.NODE_ENV === "production" ? ".vercel.app" : "localhost", // Set your domain for production
+        domain: ".vercel.app", // Set your domain for production
+      },
+      cookies: {
+        session_token: {
+          attributes: {
+            sameSite: "none",
+          },
+        },
+        session_data: {
+          attributes: {
+            sameSite: "none",
+          },
+        },
       },
     },
     session: {
