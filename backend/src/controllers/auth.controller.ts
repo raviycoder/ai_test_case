@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient, Db } from "mongodb";
 import { beforeAuthHook } from "../middleware/auth.middleware";
-import { config } from "@/config";
+import { config } from "../config";
 
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/";
 const DB_NAME = process.env.DB_NAME || "ai_test_git";
