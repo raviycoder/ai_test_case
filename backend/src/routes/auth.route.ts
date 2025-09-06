@@ -5,7 +5,7 @@ import { getAuth } from '../controllers/auth.controller';
 const router = Router();
 
 // Async middleware to handle Better Auth initialization
-const authHandler = async (req: Request, res: Response) => {
+export const authHandler = async (req: Request, res: Response) => {
   try {
     const auth = await getAuth();
     const handler = toNodeHandler(auth);
