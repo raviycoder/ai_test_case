@@ -1,7 +1,6 @@
 import { apiClient } from '../api-client';
 import { createAuthClient } from 'better-auth/react';
 import { toast } from 'sonner';
-import { getBetterAuthCookieHeader, debugCookies } from '../cookie-utils';
 import { createEnhancedAuthClient } from '../better-auth-fetch';
 import axios from 'axios';
 

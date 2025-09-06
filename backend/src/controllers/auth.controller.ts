@@ -2,9 +2,9 @@ import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient, Db } from "mongodb";
 import { beforeAuthHook } from "../middleware/auth.middleware";
+import { config } from "@/config";
 
-const MONGODB_URI =
-  process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/";
 const DB_NAME = process.env.DB_NAME || "ai_test_git";
 
 // Global variables for connection and auth
@@ -15,12 +15,12 @@ let authInstance: any = null;
 // Function to get connected database
 export const getDatabase = async (): Promise<Db> => {
   if (database) return database;
-  
+
   if (!client) {
     client = new MongoClient(MONGODB_URI);
     await client.connect();
   }
-  
+
   database = client.db(DB_NAME);
   return database;
 };
@@ -36,6 +36,12 @@ export const getAuth = async () => {
   authInstance = betterAuth({
     database: mongodbAdapter(db),
     baseURL: process.env.BETTER_AUTH_URL,
+    advanced: {
+      crossSubDomainCookies: {
+        enabled: true,
+        domain: config.NODE_ENV === "production" ? ".vercel.app" : "localhost", // Set your domain for production
+      },
+    },
     session: {
       cookieCache: {
         enabled: true,
@@ -58,7 +64,7 @@ export const getAuth = async () => {
     logger: {
       level: "info",
       log: (level, message, ...args) => {
-        if (process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV !== "production") {
           console.log({
             level,
             message,
