@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBetterAuthCookieHeader, debugCookies } from './cookie-utils';
 
 // Create a common axios instance with credentials enabled
 export const apiClient = axios.create({
@@ -10,9 +11,24 @@ export const apiClient = axios.create({
 // Add request interceptor for debugging and authentication
 apiClient.interceptors.request.use(
   (config) => {
+    // Get Better Auth cookies and add them to headers
+    const betterAuthCookies = getBetterAuthCookieHeader();
+    
+    if (betterAuthCookies) {
+      // Add cookies to the Cookie header
+      config.headers.Cookie = betterAuthCookies;
+      console.log('Added Better Auth cookies:', betterAuthCookies);
+    }
+    
     console.log('API Request:', config.method?.toUpperCase(), config.url);
     console.log('Request headers:', config.headers);
     console.log('With credentials:', config.withCredentials);
+    
+    // Debug cookies for troubleshooting
+    if (process.env.NODE_ENV === 'development') {
+      debugCookies();
+    }
+    
     return config;
   },
   (error) => {
