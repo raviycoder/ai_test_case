@@ -37,12 +37,6 @@ export const getAuth = async () => {
   authInstance = betterAuth({
     database: mongodbAdapter(db),
     baseURL: process.env.BETTER_AUTH_URL,
-    advanced: {
-      crossSubDomainCookies: {
-        enabled: true,
-        domain: ".vercel.app", // Set your domain for production
-      },
-    },
     hooks: {
       before: beforeAuthHook,
     },

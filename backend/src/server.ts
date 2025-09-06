@@ -53,7 +53,8 @@ if (config.NODE_ENV !== 'test') {
 app.all("/api/auth/*", async (req, res, next) => {
   try {
     const auth = await getAuth();
-    return toNodeHandler(auth)(req, res);
+    const handler = toNodeHandler(auth);
+    return handler(req, res);
   } catch (error) {
     console.error('Better Auth error:', error);
     return res.status(500).json({ error: 'Authentication service error' });

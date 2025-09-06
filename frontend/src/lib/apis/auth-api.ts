@@ -2,6 +2,7 @@ import { apiClient } from '../api-client';
 import { createAuthClient } from 'better-auth/react';
 import { toast } from 'sonner';
 import { createEnhancedAuthClient } from '../better-auth-fetch';
+import axios from 'axios';
 
 export const authClient = createAuthClient({
   baseURL: import.meta.env.VITE_API_URL, // Your backend URL
@@ -15,20 +16,22 @@ export const enhancedAuthClient = createEnhancedAuthClient(import.meta.env.VITE_
 export const authAPI = {
   // GitHub OAuth login
   signInWithGitHub: async (callbackURL?: string) => {
-    return authClient.signIn.social({
+    const result = await authClient.signIn.social({
       provider: 'github',
       callbackURL: callbackURL || '/', // Redirect after login
     });
+    console.log('GitHub sign-in result:', result);
+    return result;
   },
 
   // Get current session using Better Auth
   getSession: async () => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/session`, { credentials: "include" });
-    console.log('Session response:', response.json());
-    if (!response.ok) {
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/session`, { withCredentials: true });
+    console.log('Session response:', response.data);
+    if (!response.data) {
       throw new Error('Failed to fetch session');
     }
-    return response.json();
+    return response.data;
   },
 
   // Sign out
