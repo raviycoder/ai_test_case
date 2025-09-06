@@ -3,10 +3,7 @@ import axios from 'axios';
 // Create a common axios instance with credentials enabled
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true, // This ensures cookies are sent with requests
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  withCredentials: true,
   timeout: 30000, // 30 second timeout
 });
 

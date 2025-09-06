@@ -10,18 +10,12 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5000/";
 const aiTestApi = axios.create({
   baseURL: `${API_BASE_URL}/api/ai-tests`,
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 // Configure axios for Inngest endpoints
 const inngestApi = axios.create({
   baseURL: `${API_BASE_URL}/api/inngest`,
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 // Types for AI test generation

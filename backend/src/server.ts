@@ -34,18 +34,6 @@ app.use(helmet());
 // });
 // app.use(limiter);
 
-// Better Auth middleware - must come before express.json()
-app.all("/api/auth/*", async (req, res, next) => {
-  try {
-    const auth = await getAuth();
-    const handler = toNodeHandler(auth);
-    return handler(req, res);
-  } catch (error) {
-    console.error('Better Auth error:', error);
-    return res.status(500).json({ error: 'Authentication service error' });
-  }
-});
-
 // CORS configuration
 app.use(cors({
   origin: config.FRONTEND_URL || "*",
@@ -60,6 +48,17 @@ app.use(compression());
 if (config.NODE_ENV !== 'test') {
   app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev'));
 }
+
+// Better Auth middleware - must come before express.json()
+app.all("/api/auth/*", async (req, res, next) => {
+  try {
+    const auth = await getAuth();
+    return toNodeHandler(auth)(req, res);
+  } catch (error) {
+    console.error('Better Auth error:', error);
+    return res.status(500).json({ error: 'Authentication service error' });
+  }
+});
 
 
 
