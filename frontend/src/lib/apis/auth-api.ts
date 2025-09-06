@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { apiClient } from '../api-client';
 import { createAuthClient } from 'better-auth/react';
 import { toast } from 'sonner';
 
@@ -49,10 +50,9 @@ export const authAPI = {
     return authClient.accountInfo({ accountId: id });
   },
   // Link Status
-
   isGitHubLinked: async (userId: string) => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/github/is-linked/${userId}`);
+      const response = await apiClient.get(`/api/github/is-linked/${userId}`);
       if (!response.data.success) {
         throw new Error("Failed to check GitHub link status");
       }

@@ -14,6 +14,7 @@ import aiTestRoutes from './routes/ai_test.route';
 import inngestRoutes from './routes/inngest.route';
 import realtimeRoutes from './routes/realtime.route';
 import { getAuth } from './controllers/auth.controller';
+import { getSessionDebug } from './controllers/debug.controller';
 import { serve } from "inngest/express";
 import { inngest, functions } from "./services/inngest/index";
 
@@ -35,10 +36,10 @@ app.use(helmet());
 
 // CORS configuration
 app.use(cors({
-  origin: config.FRONTEND_URL,
+  origin: config.FRONTEND_URL || "*",
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
-  // allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Compression middleware
@@ -76,6 +77,9 @@ app.get('/health', (req, res) => {
     uptime: process.uptime()
   });
 });
+
+// Debug session endpoint
+app.get('/debug/session', getSessionDebug);
 
 // API routes - mount BEFORE Inngest to ensure proper routing
 app.use('/api/users', userRoutes);
